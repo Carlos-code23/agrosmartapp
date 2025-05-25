@@ -2,55 +2,42 @@ package com.projectfinal.spring.agrosmart.agrosmart_application.service;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder; // Importar PasswordEncoder
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Para manejo de transacciones
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-@Service // Marca esta clase como un servicio de Spring
-@Transactional // Todos los métodos de esta clase serán transaccionales por defecto
+@Service
+@Transactional
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder; // Inyectar PasswordEncoder
 
-    // Inyección de dependencias por constructor (forma recomendada)
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    // Modificar el constructor para inyectar PasswordEncoder
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
      * Guarda un nuevo usuario en la base de datos.
-     * Aquí se podría añadir lógica de negocio como la encriptación de la contraseña.
+     * Encripta la contraseña antes de guardar.
      * @param usuario El objeto Usuario a guardar.
      * @return El usuario guardado.
      */
     public Usuario saveUsuario(Usuario usuario) {
-        // TODO: En una fase posterior, aquí se debe encriptar la contraseña
-        // usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        // Encriptar la contraseña antes de guardarla
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Obtiene un usuario por su ID.
-     * @param id El ID del usuario.
-     * @return Un Optional que contiene el usuario si se encuentra, o vacío si no.
-     */
-    @Transactional(readOnly = true) // Este método solo lee, puede ser más eficiente
-    public Optional<Usuario> getUsuarioById(Long id) {
-        return usuarioRepository.findById(id);
-    }
-
-    /**
-     * Obtiene todos los usuarios.
-     * @return Una lista de todos los usuarios.
-     */
-    @Transactional(readOnly = true)
-    public List<Usuario> getAllUsuarios() {
-        return usuarioRepository.findAll();
-    }
+    // ... (Métodos getUsuarioById, getAllUsuarios, deleteUsuario, findByEmail son los mismos)
 
     /**
      * Actualiza un usuario existente.
+     * NOTA: Para la contraseña, es mejor un método separado para cambiarla.
      * @param id El ID del usuario a actualizar.
      * @param usuarioDetails Los detalles actualizados del usuario.
      * @return El usuario actualizado.
@@ -62,25 +49,36 @@ public class UsuarioService {
 
         usuario.setNombre(usuarioDetails.getNombre());
         usuario.setEmail(usuarioDetails.getEmail());
-        // TODO: Considerar si la contraseña se actualiza aquí o en un método separado
-        // usuario.setPassword(usuarioDetails.getPassword()); // Si no se encripta de nuevo, cuidado!
+        // No se debe actualizar la contraseña aquí si no es un cambio de contraseña explícito.
+        // Si se actualizara aquí, la contraseña que llega en usuarioDetails ya debería estar encriptada,
+        // o se debería re-encriptar si viene en texto plano (lo cual no es buena práctica para updates).
+        // Mejor un método dedicado para cambiar contraseña.
 
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Elimina un usuario por su ID.
-     * @param id El ID del usuario a eliminar.
-     */
+    // Nuevo método para actualizar solo la contraseña de un usuario
+    public void updatePassword(Long userId, String newPassword) {
+        Usuario usuario = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + userId));
+        usuario.setPassword(passwordEncoder.encode(newPassword));
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Usuario> getUsuarioById(Long id) {
+        return usuarioRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Usuario> getAllUsuarios() {
+        return usuarioRepository.findAll();
+    }
+
     public void deleteUsuario(Long id) {
         usuarioRepository.deleteById(id);
     }
 
-    /**
-     * Busca un usuario por su dirección de email.
-     * @param email La dirección de email a buscar.
-     * @return Un Optional que contiene el usuario si se encuentra, o vacío si no.
-     */
     @Transactional(readOnly = true)
     public Optional<Usuario> findByEmail(String email) {
         return usuarioRepository.findByEmail(email);
