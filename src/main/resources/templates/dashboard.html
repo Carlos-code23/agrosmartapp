@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AgroSmart</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="dashboard-summary">
+            <h2 th:if="${usuario.nombre}">Bienvenido, <span th:text="${usuario.nombre}"></span>!</h2>
+            <h2 th:unless="${usuario.nombre}">Bienvenido!</h2>
+
+            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+            <h3>Resumen de tu Actividad Agrícola</h3>
+            <p>Aquí verás un resumen de tus parcelas, planeaciones de cultivo activas y métricas importantes.</p>
+
+            <div class="dashboard-cards-container">
+                <div class="card">
+                    <h4>Parcelas Registradas</h4>
+                    <p>Total: <span th:text="${#lists.size(usuario.planeacionesCultivo)}">0</span></p> <a th:href="@{/parcelas}" class="button-small">Ver Parcelas</a>
+                </div>
+                <div class="card">
+                    <h4>Planeaciones Activas</h4>
+                    <p>En curso: <span th:text="${#lists.size(usuario.planeacionesCultivo)}">0</span></p>
+                    <a th:href="@{/planeaciones}" class="button-small">Ver Planeaciones</a>
+                </div>
+                </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

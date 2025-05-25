@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a AgroSmart</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"> </head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+    </header>
+
+    <main>
+        <section class="welcome-section">
+            <h2>Gestión Inteligente de Cultivos</h2>
+            <p>AgroSmart es tu compañero ideal para optimizar la gestión de tus parcelas y cultivos. Controla tus planificaciones, insumos, y siembras para maximizar tu productividad.</p>
+            <p>Con nuestra plataforma, podrás calcular la densidad de siembra, llevar un seguimiento detallado de cada etapa de tus cultivos y mucho más.</p>
+            <div class="auth-buttons">
+                <a th:href="@{/auth/register}" class="button">Regístrate</a>
+                <a th:href="@{/auth/login}" class="button">Iniciar Sesión</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+    <script th:src="@{/js/scripts.js}"></script> </body>
+</html>
