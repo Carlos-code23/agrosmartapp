@@ -1,46 +1,67 @@
-package com.projectfinal.spring.agrosmart.agrosmart_application.model;
+package com.projectfinal.spring.agrosmart.agrosmart_application.model; 
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.util.ArrayList;
+import lombok.Data; 
+
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "insumos")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data // Genera getters, setters, equals, hashCode y toString automáticamente
 public class Insumo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "El nombre del insumo es requerido")
+    @Size(max = 255, message = "El nombre no puede exceder los 255 caracteres")
     @Column(nullable = false, length = 255)
     private String nombre;
 
+    @NotBlank(message = "El tipo de insumo es requerido")
+    @Size(max = 100, message = "El tipo no puede exceder los 100 caracteres")
     @Column(length = 100)
-    private String tipo; // Ej. 'Fertilizante', 'Semilla'
+    private String tipo; // Ej. 'Fertilizante', 'Semilla', 'Pesticida'
 
-    @Column(name = "proveedor") 
+    @Size(max = 255, message = "El proveedor no puede exceder los 255 caracteres")
+    @Column(name = "proveedor", length = 255) // Puede ser null si no es obligatorio al inicio
     private String proveedor;
-    
-    @Column(name = "cantidad_stock")
-    private Double cantidadStock;
 
+    @NotBlank(message = "La unidad de medida es obligatoria")
+    @Size(max = 50, message = "La unidad de medida no puede exceder los 50 caracteres")
     @Column(name = "unidad_medida", length = 50)
-    private String unidadMedida; // Ej. 'kg', 'litros'
+    private String unidadMedida; // Ej. 'kg', 'litros', 'gr', 'unidad', 'paquete'
 
+    @NotNull(message = "El precio unitario es obligatorio")
+    @DecimalMin(value = "0.0", inclusive = false, message = "El precio unitario debe ser mayor que cero")
     @Column(name = "precio_unitario", nullable = false, precision = 10, scale = 2)
-    private BigDecimal precioUnitario;
+    private BigDecimal precioUnitario; // Cambiado de costoUnitario a precioUnitario
 
     @Column(columnDefinition = "TEXT")
-    private String descripcion;
+    private String descripcion; // Puede ser null
+
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false) // Columna en la tabla 'insumos' que almacena el ID del usuario
+    private Usuario usuario; // Asume que ya tienes una entidad Usuario
 
     // Relaciones: Un Insumo puede estar en muchas InsumosPlaneacion
-    @OneToMany(mappedBy = "insumo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<InsumoPlaneacion> insumosPlaneacion;
+    @OneToMany(mappedBy = "insumo", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private java.util.List<InsumoPlaneacion> insumosPlaneacion = new ArrayList<>();
+
+    public void addInsumoPlaneacion(InsumoPlaneacion insumoPlaneacion) {
+        insumosPlaneacion.add(insumoPlaneacion);
+        insumoPlaneacion.setInsumo(this);
+    }
+
+    public void removeInsumoPlaneacion(InsumoPlaneacion insumoPlaneacion) {
+        insumosPlaneacion.remove(insumoPlaneacion);
+        insumoPlaneacion.setInsumo(null);
+    }
 }

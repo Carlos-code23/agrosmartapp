@@ -52,12 +52,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="cantidadStock">Cantidad en Stock:</label>
-                    <input type="number" id="cantidadStock" th:field="*{cantidadStock}" step="0.01">
-                    <div th:if="${#fields.hasErrors('cantidadStock')}" th:errors="*{cantidadStock}" class="error-message"></div>
-                </div>
-
-                <div class="form-group">
                     <label for="unidadMedida">Unidad de Medida:</label>
                     <input type="text" id="unidadMedida" th:field="*{unidadMedida}">
                     <div th:if="${#fields.hasErrors('unidadMedida')}" th:errors="*{unidadMedida}" class="error-message"></div>

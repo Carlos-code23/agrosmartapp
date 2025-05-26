@@ -1,6 +1,7 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.repository;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Insumo;
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
@@ -15,4 +16,8 @@ public interface InsumoRepository extends JpaRepository<Insumo, Long> {
 
     // Encontrar insumos por nombre que contenga una cadena (ignorando mayúsculas/minúsculas)
     List<Insumo> findByNombreContainingIgnoreCase(String nombre);
+
+    List<Insumo> findByUsuario(Usuario usuario);
+
+    Optional<Insumo> findByIdAndUsuario(Long id, Usuario usuario);
 }

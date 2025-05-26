@@ -54,7 +54,7 @@
                         <td th:text="${etapa.tipoCultivo?.nombre}"></td>
                         <td th:text="${etapa.nombre}"></td>
                         <td th:text="${etapa.descripcion}"></td>
-                        <td th:text="${etapa.duracionDiasEstimada}"></td>
+                        <td th:text="${etapa.duracionDias}"></td>
                         <td>
                             <a th:href="@{/etapas/edit/{id}(id=${etapa.id})}" class="button-small edit-button">Editar</a>
                             <form th:action="@{/etapas/delete/{id}(id=${etapa.id})}" method="post" style="display:inline-block;">

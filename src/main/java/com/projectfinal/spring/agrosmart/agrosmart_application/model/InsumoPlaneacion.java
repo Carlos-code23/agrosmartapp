@@ -28,7 +28,7 @@ public class InsumoPlaneacion {
     @JoinColumn(name = "insumo_id", nullable = false)
     private Insumo insumo;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "cantidad", nullable = false, precision = 10, scale = 2)
     private BigDecimal cantidad;
 
     @Column(name = "costo_total", nullable = false, precision = 10, scale = 2)

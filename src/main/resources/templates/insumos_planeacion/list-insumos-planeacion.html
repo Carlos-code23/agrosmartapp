@@ -46,8 +46,8 @@
                 <thead>
                     <tr>
                         <th>Insumo</th>
-                        <th>Cantidad Usada</th>
-                        <th>Unidad Usada</th>
+                        <th>Cantidad</th>
+                        <th>Unidad</th>
                         <th>Notas</th>
                         <th>Acciones</th>
                     </tr>
@@ -55,9 +55,9 @@
                 <tbody>
                     <tr th:each="ip : ${insumosPlaneacion}">
                         <td th:text="${ip.insumo?.nombre}"></td>
-                        <td th:text="${ip.cantidadUsada}"></td>
-                        <td th:text="${ip.unidadMedidaUsada}"></td>
-                        <td th:text="${ip.notas}"></td>
+                        <td th:text="${ip.cantidad}"></td>
+                        <td th:text="${ip.insumo?unidadMedida}"></td>
+                        <td th:text="${ip.observaciones}"></td>
                         <td>
                             <a th:href="@{/planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${ip.id})}" class="button-small edit-button">Editar</a>
                             <form th:action="@{/planeaciones/{planeacionId}/insumos/delete/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${ip.id})}" method="post" style="display:inline-block;">
