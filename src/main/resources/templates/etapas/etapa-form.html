@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${etapaCultivo.id} ? 'Editar Etapa de Cultivo - AgroSmart' : 'Crear Etapa de Cultivo - AgroSmart'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li><a th:href="@{/etapas}" class="active">Etapas de Cultivo</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="auth-form-container">
+            <h2 th:text="${etapaCultivo.id} ? 'Editar Etapa de Cultivo' : 'Crear Nueva Etapa de Cultivo'"></h2>
+
+            <form th:action="${etapaCultivo.id} ? @{/etapas/update/{id}(id=${etapaCultivo.id})} : @{/etapas}" th:object="${etapaCultivo}" method="post" class="auth-form">
+
+                <input type="hidden" th:field="*{id}" th:if="${etapaCultivo.id}" />
+
+                <div class="form-group">
+                    <label for="tipoCultivo">Tipo de Cultivo:</label>
+                    <select id="tipoCultivo" th:field="*{tipoCultivo.id}" required>
+                        <option value="">Selecciona un Tipo de Cultivo</option>
+                        <option th:each="tc : ${tiposCultivo}" th:value="${tc.id}" th:text="${tc.nombre}"></option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('tipoCultivo')}" th:errors="*{tipoCultivo}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre de Etapa:</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required>
+                    <div th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción (Opcional):</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
+                    <div th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="duracionDiasEstimada">Duración Est. (días):</label>
+                    <input type="number" id="duracionDiasEstimada" th:field="*{duracionDiasEstimada}">
+                    <div th:if="${#fields.hasErrors('duracionDiasEstimada')}" th:errors="*{duracionDiasEstimada}" class="error-message"></div>
+                </div>
+
+                <button type="submit" class="button">Guardar Etapa</button>
+                <a th:href="@{/etapas}" class="button cancel-button">Cancelar</a>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${insumo.id} ? 'Editar Insumo - AgroSmart' : 'Crear Insumo - AgroSmart'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}" class="active">Insumos</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="auth-form-container">
+            <h2 th:text="${insumo.id} ? 'Editar Insumo' : 'Crear Nuevo Insumo'"></h2>
+
+            <form th:action="${insumo.id} ? @{/insumos/update/{id}(id=${insumo.id})} : @{/insumos}" th:object="${insumo}" method="post" class="auth-form">
+
+                <input type="hidden" th:field="*{id}" th:if="${insumo.id}" />
+
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required>
+                    <div th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipo">Tipo:</label>
+                    <input type="text" id="tipo" th:field="*{tipo}">
+                    <div th:if="${#fields.hasErrors('tipo')}" th:errors="*{tipo}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="proveedor">Proveedor:</label>
+                    <input type="text" id="proveedor" th:field="*{proveedor}">
+                    <div th:if="${#fields.hasErrors('proveedor')}" th:errors="*{proveedor}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cantidadStock">Cantidad en Stock:</label>
+                    <input type="number" id="cantidadStock" th:field="*{cantidadStock}" step="0.01">
+                    <div th:if="${#fields.hasErrors('cantidadStock')}" th:errors="*{cantidadStock}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="unidadMedida">Unidad de Medida:</label>
+                    <input type="text" id="unidadMedida" th:field="*{unidadMedida}">
+                    <div th:if="${#fields.hasErrors('unidadMedida')}" th:errors="*{unidadMedida}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="precioUnitario">Precio Unitario:</label>
+                    <input type="number" id="precioUnitario" th:field="*{precioUnitario}" step="0.01">
+                    <div th:if="${#fields.hasErrors('precioUnitario')}" th:errors="*{precioUnitario}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción (Opcional):</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
+                    <div th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="error-message"></div>
+                </div>
+
+                <button type="submit" class="button">Guardar Insumo</button>
+                <a th:href="@{/insumos}" class="button cancel-button">Cancelar</a>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

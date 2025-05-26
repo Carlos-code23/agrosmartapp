@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'Siembras para Planeación: ' + planeacion.nombre + ' - AgroSmart'}"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}" class="active">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="crud-section">
+            <h2 th:text="${'Siembras para Planeación: ' + planeacion.nombre}"></h2>
+            <p><strong>Parcela:</strong> <span th:text="${planeacion.parcela?.nombre}"></span></p>
+            <p><strong>Tipo de Cultivo:</strong> <span th:text="${planeacion.tipoCultivo?.nombre}"></span></p>
+
+            <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+            <a th:href="@{/planeaciones/{planeacionId}/siembras/new(planeacionId=${planeacion.id})}" class="button">Registrar Nueva Siembra</a>
+            <a th:href="@{/planeaciones}" class="button cancel-button">Volver a Planeaciones</a>
+
+            <div th:if="${#lists.isEmpty(siembras)}" class="no-data-message">
+                <p>No hay registros de siembra para esta planeación aún.</p>
+            </div>
+
+            <table th:unless="${#lists.isEmpty(siembras)}" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Fecha Real</th>
+                        <th>Cantidad Sembrada</th>
+                        <th>Notas</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="s : ${siembras}">
+                        <td th:text="${s.fechaReal}"></td>
+                        <td th:text="${s.cantidadSembrada}"></td>
+                        <td th:text="${s.notas}"></td>
+                        <td>
+                            <a th:href="@{/planeaciones/{planeacionId}/siembras/edit/{siembraId}(planeacionId=${planeacion.id}, siembraId=${s.id})}" class="button-small edit-button">Editar</a>
+                            <form th:action="@{/planeaciones/{planeacionId}/siembras/delete/{siembraId}(planeacionId=${planeacion.id}, siembraId=${s.id})}" method="post" style="display:inline-block;">
+                                <button type="submit" class="button-small delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar este registro de siembra?');">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${insumoPlaneacion.id} ? 'Editar Insumo en Planeación - AgroSmart' : 'Añadir Insumo a Planeación - AgroSmart'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}" class="active">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="auth-form-container">
+            <h2 th:text="${insumoPlaneacion.id} ? 'Editar Insumo para Planeación: ' + ${planeacion.nombre} : 'Añadir Insumo a Planeación: ' + ${planeacion.nombre}"></h2>
+
+            <form th:action="${insumoPlaneacion.id} ? @{/planeaciones/{planeacionId}/insumos/update/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${insumoPlaneacion.id})} : @{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" th:object="${insumoPlaneacion}" method="post" class="auth-form">
+
+                <input type="hidden" th:field="*{id}" th:if="${insumoPlaneacion.id}" />
+                <input type="hidden" th:field="*{planeacion.id}" th:value="${planeacion.id}" />
+
+                <div class="form-group">
+                    <label for="insumo">Insumo:</label>
+                    <select id="insumo" th:field="*{insumo.id}" required>
+                        <option value="">Selecciona un Insumo</option>
+                        <option th:each="i : ${allInsumos}" th:value="${i.id}" th:text="${i.nombre}"></option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('insumo')}" th:errors="*{insumo}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cantidadUsada">Cantidad Usada:</label>
+                    <input type="number" id="cantidadUsada" th:field="*{cantidadUsada}" step="0.01" required>
+                    <div th:if="${#fields.hasErrors('cantidadUsada')}" th:errors="*{cantidadUsada}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="unidadMedidaUsada">Unidad de Medida Usada:</label>
+                    <input type="text" id="unidadMedidaUsada" th:field="*{unidadMedidaUsada}">
+                    <div th:if="${#fields.hasErrors('unidadMedidaUsada')}" th:errors="*{unidadMedidaUsada}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notas">Notas (Opcional):</label>
+                    <textarea id="notas" th:field="*{notas}" rows="3"></textarea>
+                    <div th:if="${#fields.hasErrors('notas')}" th:errors="*{notas}" class="error-message"></div>
+                </div>
+
+                <button type="submit" class="button">Guardar Insumo</button>
+                <a th:href="@{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" class="button cancel-button">Cancelar</a>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

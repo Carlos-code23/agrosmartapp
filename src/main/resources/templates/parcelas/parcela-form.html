@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${parcela.id} ? 'Editar Parcela - AgroSmart' : 'Crear Parcela - AgroSmart'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}" class="active">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="auth-form-container"> <h2 th:text="${parcela.id} ? 'Editar Parcela' : 'Crear Nueva Parcela'"></h2>
+
+            <form th:action="${parcela.id} ? @{/parcelas/update/{id}(id=${parcela.id})} : @{/parcelas}" th:object="${parcela}" method="post" class="auth-form">
+
+                <input type="hidden" th:field="*{id}" th:if="${parcela.id}" />
+
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required>
+                    <div th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ubicacion">Ubicación:</label>
+                    <input type="text" id="ubicacion" th:field="*{ubicacion}" required>
+                    <div th:if="${#fields.hasErrors('ubicacion')}" th:errors="*{ubicacion}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tamano">Tamaño:</label>
+                    <input type="number" id="tamano" th:field="*{tamano}" step="0.01" required>
+                    <div th:if="${#fields.hasErrors('tamano')}" th:errors="*{tamano}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="unidadMedida">Unidad de Medida:</label>
+                    <select id="unidadMedida" th:field="*{unidadMedida}" required>
+                        <option value="">Selecciona una unidad</option>
+                        <option value="hectareas">Hectáreas</option>
+                        <option value="m2">Metros Cuadrados (m²)</option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('unidadMedida')}" th:errors="*{unidadMedida}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción (Opcional):</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
+                    <div th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="error-message"></div>
+                </div>
+
+                <button type="submit" class="button">Guardar Parcela</button>
+                <a th:href="@{/parcelas}" class="button cancel-button">Cancelar</a> </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

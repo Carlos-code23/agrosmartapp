@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Parcelas - AgroSmart</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}" class="active">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="crud-section">
+            <h2>Mis Parcelas <span th:if="${currentUser}" th:text="${'(' + currentUser.nombre + ')'}"></span></h2>
+
+            <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+            <a th:href="@{/parcelas/new}" class="button">Crear Nueva Parcela</a>
+
+            <div th:if="${#lists.isEmpty(parcelas)}" class="no-data-message">
+                <p>No tienes parcelas registradas aún. ¡Crea una para empezar a planificar tus cultivos!</p>
+            </div>
+
+            <table th:unless="${#lists.isEmpty(parcelas)}" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Ubicación</th>
+                        <th>Tamaño</th>
+                        <th>Unidad</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="parcela : ${parcelas}">
+                        <td th:text="${parcela.nombre}"></td>
+                        <td th:text="${parcela.ubicacion}"></td>
+                        <td th:text="${parcela.tamano}"></td>
+                        <td th:text="${parcela.unidadMedida}"></td>
+                        <td th:text="${parcela.descripcion}"></td>
+                        <td>
+                            <a th:href="@{/parcelas/edit/{id}(id=${parcela.id})}" class="button-small edit-button">Editar</a>
+                            <form th:action="@{/parcelas/delete/{id}(id=${parcela.id})}" method="post" style="display:inline-block;">
+                                <button type="submit" class="button-small delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar esta parcela? Esto también eliminará las planificaciones de cultivo asociadas.');">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${tipoCultivo.id} ? 'Editar Tipo de Cultivo - AgroSmart' : 'Crear Tipo de Cultivo - AgroSmart'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}" class="active">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="auth-form-container">
+            <h2 th:text="${tipoCultivo.id} ? 'Editar Tipo de Cultivo' : 'Crear Nuevo Tipo de Cultivo'"></h2>
+
+            <form th:action="${tipoCultivo.id} ? @{/tipos-cultivo/update/{id}(id=${tipoCultivo.id})} : @{/tipos-cultivo}" th:object="${tipoCultivo}" method="post" class="auth-form">
+
+                <input type="hidden" th:field="*{id}" th:if="${tipoCultivo.id}" />
+
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required>
+                    <div th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción (Opcional):</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
+                    <div th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="densidadSiembraRecomendadaPorHa">Densidad Siembra Rec. (por Ha):</label>
+                    <input type="number" id="densidadSiembraRecomendadaPorHa" th:field="*{densidadSiembraRecomendadaPorHa}" step="0.01">
+                    <div th:if="${#fields.hasErrors('densidadSiembraRecomendadaPorHa')}" th:errors="*{densidadSiembraRecomendadaPorHa}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="duracionDiasEstimada">Duración Est. (días):</label>
+                    <input type="number" id="duracionDiasEstimada" th:field="*{duracionDiasEstimada}">
+                    <div th:if="${#fields.hasErrors('duracionDiasEstimada')}" th:errors="*{duracionDiasEstimada}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="distanciaSurco">Distancia Surco (m):</label>
+                    <input type="number" id="distanciaSurco" th:field="*{distanciaSurco}" step="0.01">
+                    <div th:if="${#fields.hasErrors('distanciaSurco')}" th:errors="*{distanciaSurco}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="distanciaPlanta">Distancia Planta (m):</label>
+                    <input type="number" id="distanciaPlanta" th:field="*{distanciaPlanta}" step="0.01">
+                    <div th:if="${#fields.hasErrors('distanciaPlanta')}" th:errors="*{distanciaPlanta}" class="error-message"></div>
+                </div>
+
+                <button type="submit" class="button">Guardar Tipo de Cultivo</button>
+                <a th:href="@{/tipos-cultivo}" class="button cancel-button">Cancelar</a>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

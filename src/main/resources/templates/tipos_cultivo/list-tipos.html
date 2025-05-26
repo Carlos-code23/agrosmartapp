@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tipos de Cultivo - AgroSmart</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}" class="active">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="crud-section">
+            <h2>Tipos de Cultivo</h2>
+
+            <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+            <a th:href="@{/tipos-cultivo/new}" class="button">Crear Nuevo Tipo de Cultivo</a>
+
+            <div th:if="${#lists.isEmpty(tiposCultivo)}" class="no-data-message">
+                <p>No hay tipos de cultivo registrados aún.</p>
+            </div>
+
+            <table th:unless="${#lists.isEmpty(tiposCultivo)}" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Densidad Rec. (por Ha)</th>
+                        <th>Duración Est. (días)</th>
+                        <th>Distancia Surco (m)</th>
+                        <th>Distancia Planta (m)</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="tipo : ${tiposCultivo}">
+                        <td th:text="${tipo.nombre}"></td>
+                        <td th:text="${tipo.descripcion}"></td>
+                        <td th:text="${tipo.densidadSiembraRecomendadaPorHa}"></td>
+                        <td th:text="${tipo.duracionDiasEstimada}"></td>
+                        <td th:text="${tipo.distanciaSurco}"></td>
+                        <td th:text="${tipo.distanciaPlanta}"></td>
+                        <td>
+                            <a th:href="@{/tipos-cultivo/edit/{id}(id=${tipo.id})}" class="button-small edit-button">Editar</a>
+                            <form th:action="@{/tipos-cultivo/delete/{id}(id=${tipo.id})}" method="post" style="display:inline-block;">
+                                <button type="submit" class="button-small delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar este tipo de cultivo?');">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

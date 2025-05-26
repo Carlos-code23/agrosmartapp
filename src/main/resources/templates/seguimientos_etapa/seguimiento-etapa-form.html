@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${seguimientoEtapa.id} ? 'Editar Seguimiento de Etapa - AgroSmart' : 'Añadir Seguimiento de Etapa - AgroSmart'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}" class="active">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="auth-form-container">
+            <h2 th:text="${seguimientoEtapa.id} ? 'Editar Seguimiento de Etapa para Planeación: ' + ${planeacion.nombre} : 'Añadir Seguimiento de Etapa a Planeación: ' + ${planeacion.nombre}"></h2>
+
+            <form th:action="${seguimientoEtapa.id} ? @{/planeaciones/{planeacionId}/seguimientos/update/{seguimientoId}(planeacionId=${planeacion.id}, seguimientoId=${seguimientoEtapa.id})} : @{/planeaciones/{planeacionId}/seguimientos(planeacionId=${planeacion.id})}" th:object="${seguimientoEtapa}" method="post" class="auth-form">
+
+                <input type="hidden" th:field="*{id}" th:if="${seguimientoEtapa.id}" />
+                <input type="hidden" th:field="*{planeacion.id}" th:value="${planeacion.id}" />
+
+                <div class="form-group">
+                    <label for="etapa">Etapa de Cultivo:</label>
+                    <select id="etapa" th:field="*{etapa.id}" required>
+                        <option value="">Selecciona una Etapa</option>
+                        <option th:each="e : ${etapasCultivo}" th:value="${e.id}" th:text="${e.nombre}"></option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('etapa')}" th:errors="*{etapa}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fechaInicioReal">Fecha Inicio Real:</label>
+                    <input type="date" id="fechaInicioReal" th:field="*{fechaInicioReal}" required>
+                    <div th:if="${#fields.hasErrors('fechaInicioReal')}" th:errors="*{fechaInicioReal}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fechaFinReal">Fecha Fin Real (Opcional):</label>
+                    <input type="date" id="fechaFinReal" th:field="*{fechaFinReal}">
+                    <div th:if="${#fields.hasErrors('fechaFinReal')}" th:errors="*{fechaFinReal}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="estado">Estado:</label>
+                    <select id="estado" th:field="*{estado}" required>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Curso">En Curso</option>
+                        <option value="Completada">Completada</option>
+                        <option value="Retrasada">Retrasada</option>
+                        <option value="Cancelada">Cancelada</option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('estado')}" th:errors="*{estado}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notas">Notas (Opcional):</label>
+                    <textarea id="notas" th:field="*{notas}" rows="3"></textarea>
+                    <div th:if="${#fields.hasErrors('notas')}" th:errors="*{notas}" class="error-message"></div>
+                </div>
+
+                <button type="submit" class="button">Guardar Seguimiento</button>
+                <a th:href="@{/planeaciones/{planeacionId}/seguimientos(planeacionId=${planeacion.id})}" class="button cancel-button">Cancelar</a>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

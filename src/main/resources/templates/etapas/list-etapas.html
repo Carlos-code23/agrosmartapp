@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etapas de Cultivo - AgroSmart</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>AgroSmart</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
+                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
+                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
+                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li><a th:href="@{/etapas}" class="active">Etapas de Cultivo</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="logout-button">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="crud-section">
+            <h2>Gestión de Etapas de Cultivo</h2>
+
+            <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+            <a th:href="@{/etapas/new}" class="button">Crear Nueva Etapa</a>
+
+            <div th:if="${#lists.isEmpty(etapasCultivo)}" class="no-data-message">
+                <p>No hay etapas de cultivo registradas aún.</p>
+            </div>
+
+            <table th:unless="${#lists.isEmpty(etapasCultivo)}" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tipo de Cultivo</th>
+                        <th>Nombre de Etapa</th>
+                        <th>Descripción</th>
+                        <th>Duración Est. (días)</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="etapa : ${etapasCultivo}">
+                        <td th:text="${etapa.tipoCultivo?.nombre}"></td>
+                        <td th:text="${etapa.nombre}"></td>
+                        <td th:text="${etapa.descripcion}"></td>
+                        <td th:text="${etapa.duracionDiasEstimada}"></td>
+                        <td>
+                            <a th:href="@{/etapas/edit/{id}(id=${etapa.id})}" class="button-small edit-button">Editar</a>
+                            <form th:action="@{/etapas/delete/{id}(id=${etapa.id})}" method="post" style="display:inline-block;">
+                                <button type="submit" class="button-small delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar esta etapa de cultivo?');">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

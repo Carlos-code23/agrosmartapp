@@ -25,6 +25,12 @@ public class Insumo {
     @Column(length = 100)
     private String tipo; // Ej. 'Fertilizante', 'Semilla'
 
+    @Column(name = "proveedor") 
+    private String proveedor;
+    
+    @Column(name = "cantidad_stock")
+    private Double cantidadStock;
+
     @Column(name = "unidad_medida", length = 50)
     private String unidadMedida; // Ej. 'kg', 'litros'
 
