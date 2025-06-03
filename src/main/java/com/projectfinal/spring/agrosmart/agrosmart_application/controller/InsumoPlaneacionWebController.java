@@ -21,131 +21,176 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
+// Mapeo base para todas las operaciones de InsumoPlaneacion, anidado bajo PlaneacionCultivo
 @RequestMapping("/planeaciones/{planeacionId}/insumos")
 public class InsumoPlaneacionWebController {
 
     private final InsumoPlaneacionService insumoPlaneacionService;
     private final PlaneacionCultivoService planeacionCultivoService;
     private final InsumoService insumoService;
-    private final UsuarioService usuarioService; // Para verificar permisos
+    private final UsuarioService usuarioService;
 
     public InsumoPlaneacionWebController(InsumoPlaneacionService insumoPlaneacionService,
-                                         PlaneacionCultivoService planeacionCultivoService,
-                                         InsumoService insumoService,
-                                         UsuarioService usuarioService) {
+                                        PlaneacionCultivoService planeacionCultivoService,
+                                        InsumoService insumoService,
+                                        UsuarioService usuarioService) {
         this.insumoPlaneacionService = insumoPlaneacionService;
         this.planeacionCultivoService = planeacionCultivoService;
         this.insumoService = insumoService;
         this.usuarioService = usuarioService;
     }
 
+    // Método de ayuda para obtener el usuario autenticado
     private Usuario getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
+        String userEmail = authentication.getName(); // El nombre de usuario (email)
         return usuarioService.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado en la base de datos."));
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado en la base de datos."));
     }
 
-    // Método de utilidad para verificar que la planeación pertenezca al usuario autenticado
+    // Método de ayuda para obtener una PlaneacionCultivo y verificar si pertenece al usuario autenticado
     private PlaneacionCultivo getPlaneacionIfAuthorized(Long planeacionId) {
         Usuario currentUser = getAuthenticatedUser();
         return planeacionCultivoService.getPlaneacionCultivoById(planeacionId)
+                // Filtra para asegurar que la planeación pertenece al usuario actual
                 .filter(p -> p.getUsuario().getId().equals(currentUser.getId()))
-                .orElseThrow(() -> new IllegalArgumentException("Planeación no encontrada o no autorizado."));
+                .orElseThrow(() -> new IllegalArgumentException("Planeación no encontrada o no autorizado para acceder."));
     }
 
-    // Listar insumos asociados a una planeación específica
+    // --- LISTAR INSUMOS ASOCIADOS A UNA PLANEACIÓN ESPECÍFICA ---
+    // GET /planeaciones/{planeacionId}/insumos
     @GetMapping
     public String listInsumosByPlaneacion(@PathVariable Long planeacionId, Model model, RedirectAttributes redirectAttributes) {
         try {
+            // Se valida y obtiene la planeación para asegurar que pertenece al usuario
             PlaneacionCultivo planeacion = getPlaneacionIfAuthorized(planeacionId);
-            List<InsumoPlaneacion> insumosPlaneacion = insumoPlaneacionService.getInsumosByPlaneacionId(planeacionId);
-            model.addAttribute("planeacion", planeacion);
+            
+            // Se obtienen los insumos de planeación asociados a esta planeación y al usuario
+            List<InsumoPlaneacion> insumosPlaneacion = insumoPlaneacionService.getInsumosByPlaneacionIdAndUser(planeacionId, getAuthenticatedUser());
+            
+            // Se vuelve a cargar la planeación para obtener el estimacionCosto más reciente
+            planeacion = planeacionCultivoService.getPlaneacionCultivoByIdAndUsuario(planeacionId, getAuthenticatedUser())
+                                                .orElseThrow(() -> new IllegalStateException("Error al cargar planeación para mostrar costo después de operación."));
+
+
+            model.addAttribute("planeacion", planeacion); // Pasar la planeación (ahora actualizada con el costo)
             model.addAttribute("insumosPlaneacion", insumosPlaneacion);
-            return "insumos_planeacion/list-insumos-planeacion"; // src/main/resources/templates/insumos_planeacion/list-insumos-planeacion.html
-        } catch (IllegalArgumentException e) {
+            model.addAttribute("estimacionCostoPlaneacion", planeacion.getEstimacionCosto()); // Pasar el costo total estimado de la planeación
+            return "insumos_planeacion/list-insumos-planeacion"; // Ruta de la vista
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) { // Añadido IllegalStateException
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/planeaciones";
+            return "redirect:/planeaciones"; // Redirigir si no está autorizado o no encuentra la planeación
         }
     }
 
-    // Mostrar formulario para añadir un insumo a una planeación
+    // --- MOSTRAR FORMULARIO PARA AÑADIR UN INSUMO A UNA PLANEACIÓN ---
+    // GET /planeaciones/{planeacionId}/insumos/new
     @GetMapping("/new")
     public String showAddInsumoForm(@PathVariable Long planeacionId, Model model, RedirectAttributes redirectAttributes) {
         try {
             PlaneacionCultivo planeacion = getPlaneacionIfAuthorized(planeacionId);
+            InsumoPlaneacion insumoPlaneacion = new InsumoPlaneacion();
+            insumoPlaneacion.setPlaneacion(planeacion); // Pre-seleccionar la planeación en el formulario
+            
             model.addAttribute("planeacion", planeacion);
-            model.addAttribute("insumoPlaneacion", new InsumoPlaneacion());
-            model.addAttribute("allInsumos", insumoService.getAllInsumos()); // Lista de todos los insumos disponibles
-            return "insumos_planeacion/insumo-planeacion-form"; // src/main/resources/templates/insumos_planeacion/insumo-planeacion-form.html
-        } catch (IllegalArgumentException e) {
+            model.addAttribute("insumoPlaneacion", insumoPlaneacion);
+            // Solo mostrar insumos que pertenecen al usuario autenticado para la selección
+            model.addAttribute("allInsumos", insumoService.findByUsuario(getAuthenticatedUser()));
+            return "insumos_planeacion/insumo-planeacion-form"; // Ruta de la vista del formulario
+        } catch (IllegalArgumentException | SecurityException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/planeaciones";
         }
     }
 
-    // Procesar el formulario para añadir/actualizar un insumo en una planeación
-    @PostMapping
-    public String saveInsumoPlaneacion(@PathVariable Long planeacionId,
-                                       @Valid @ModelAttribute("insumoPlaneacion") InsumoPlaneacion insumoPlaneacion,
-                                       BindingResult result,
-                                       Model model,
-                                       RedirectAttributes redirectAttributes) {
-        try {
-            PlaneacionCultivo planeacion = getPlaneacionIfAuthorized(planeacionId);
+    // --- PROCESAR EL FORMULARIO (CREAR O ACTUALIZAR UN INSUMO EN UNA PLANEACIÓN) ---
+    // POST /planeaciones/{planeacionId}/insumos (Para creación)
+    // POST /planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId} (Para actualización)
+    // Este método maneja tanto la creación como la actualización, basándose en si insumoPlaneacion.getId() es nulo o no.
+    @PostMapping({"", "/edit/{insumoPlaneacionId}"}) // Mapping para ambos casos
+    public String saveOrUpdateInsumoPlaneacion(@PathVariable Long planeacionId,
+                                               @PathVariable(required = false) Long insumoPlaneacionId, // Puede ser nulo para creación
+                                               @Valid @ModelAttribute("insumoPlaneacion") InsumoPlaneacion insumoPlaneacion,
+                                               BindingResult result,
+                                               Model model,
+                                               RedirectAttributes redirectAttributes) {
+        Usuario currentUser = getAuthenticatedUser();
+        PlaneacionCultivo planeacion = null;
 
-            // Validar que se seleccionó un insumo
+        try {
+            planeacion = getPlaneacionIfAuthorized(planeacionId);
+            
+            // Si es una actualización, asignar el ID del path variable al objeto.
+            // Si es creación, insumoPlaneacion.getId() será nulo.
+            if (insumoPlaneacionId != null) {
+                insumoPlaneacion.setId(insumoPlaneacionId);
+            }
+
+            // Asegurarse de que el objeto PlaneacionCultivo completo está asociado
+            insumoPlaneacion.setPlaneacion(planeacion);
+
+            // Validar que se seleccionó un insumo y que pertenece al usuario
             if (insumoPlaneacion.getInsumo() == null || insumoPlaneacion.getInsumo().getId() == null) {
                 result.rejectValue("insumo", "null.insumo", "Debe seleccionar un insumo.");
+            } else {
+                Optional<Insumo> selectedInsumoOpt = insumoService.getInsumoById(insumoPlaneacion.getInsumo().getId());
+                if (selectedInsumoOpt.isEmpty() || !selectedInsumoOpt.get().getUsuario().getId().equals(currentUser.getId())) {
+                    result.rejectValue("insumo", "invalid.insumo", "El insumo seleccionado no es válido o no le pertenece.");
+                } else {
+                    insumoPlaneacion.setInsumo(selectedInsumoOpt.get()); // Asignar el objeto Insumo completo
+                }
             }
-
+            
+            // Si hay errores de validación, regresar al formulario
             if (result.hasErrors()) {
                 model.addAttribute("planeacion", planeacion);
-                model.addAttribute("allInsumos", insumoService.getAllInsumos());
+                model.addAttribute("allInsumos", insumoService.findByUsuario(currentUser));
                 return "insumos_planeacion/insumo-planeacion-form";
             }
 
-            // Asegurarse de que los objetos completos se asocian
-            insumoPlaneacion.setPlaneacion(planeacion);
-            Optional<Insumo> insumoOpt = insumoService.getInsumoById(insumoPlaneacion.getInsumo().getId());
-            if (insumoOpt.isEmpty()) {
-                result.rejectValue("insumo", "notFound.insumo", "El insumo seleccionado no es válido.");
-                model.addAttribute("planeacion", planeacion);
-                model.addAttribute("allInsumos", insumoService.getAllInsumos());
-                return "insumos_planeacion/insumo-planeacion-form";
-            }
-            insumoPlaneacion.setInsumo(insumoOpt.get());
-
-            // Si es una actualización, buscar el existente
-            if (insumoPlaneacion.getId() != null) {
-                Optional<InsumoPlaneacion> existing = insumoPlaneacionService.getInsumoPlaneacionById(insumoPlaneacion.getId());
-                if (existing.isPresent() && existing.get().getPlaneacion().getId().equals(planeacionId)) {
-                    insumoPlaneacionService.updateInsumoPlaneacion(insumoPlaneacion.getId(), insumoPlaneacion);
-                    redirectAttributes.addFlashAttribute("successMessage", "Insumo en planeación actualizado exitosamente!");
-                } else {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Insumo en planeación no encontrado o no autorizado.");
+            String message;
+            if (insumoPlaneacion.getId() == null) { // Caso de creación
+                insumoPlaneacionService.saveInsumoPlaneacion(insumoPlaneacion, currentUser);
+                message = "Insumo añadido a la planeación exitosamente!";
+            } else { // Caso de actualización
+                // Antes de actualizar, verificar que el InsumoPlaneacion existente es del usuario y de la planeación correcta
+                Optional<InsumoPlaneacion> existingIp = insumoPlaneacionService.findByIdAndPlaneacionOwnedByUser(insumoPlaneacion.getId(), currentUser);
+                if (existingIp.isEmpty()) {
+                     redirectAttributes.addFlashAttribute("errorMessage", "Asignación de insumo no encontrada o no autorizada para actualizar.");
+                     return "redirect:/planeaciones/" + planeacionId + "/insumos";
                 }
-            } else {
-                insumoPlaneacionService.saveInsumoPlaneacion(insumoPlaneacion);
-                redirectAttributes.addFlashAttribute("successMessage", "Insumo añadido a la planeación exitosamente!");
+                insumoPlaneacionService.saveInsumoPlaneacion(insumoPlaneacion, currentUser); // El método save maneja la actualización si el ID está presente
+                message = "Insumo en planeación actualizado exitosamente!";
             }
-        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("successMessage", message);
+            return "redirect:/planeaciones/" + planeacionId + "/insumos";
+
+        } catch (IllegalArgumentException | SecurityException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/planeaciones"; // Redirigir a planeaciones si hay error de autorización o no se encuentra la planeación
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar el insumo en la planeación: " + e.getMessage());
+            // Si hay un error general, volver al formulario y recargar las listas de selección
+            if (planeacion != null) {
+                model.addAttribute("planeacion", planeacion);
+            }
+            model.addAttribute("allInsumos", insumoService.findByUsuario(currentUser));
+            return "insumos_planeacion/insumo-planeacion-form";
         }
-        return "redirect:/planeaciones/" + planeacionId + "/insumos";
     }
-
-    // Mostrar formulario para editar un insumo asociado a una planeación
+    
+    // --- MOSTRAR FORMULARIO PARA EDITAR UN INSUMO EN UNA PLANEACIÓN ESPECÍFICA ---
+    // GET /planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId}
     @GetMapping("/edit/{insumoPlaneacionId}")
     public String showEditInsumoPlaneacionForm(@PathVariable Long planeacionId,
                                                @PathVariable Long insumoPlaneacionId,
                                                Model model,
                                                RedirectAttributes redirectAttributes) {
+        Usuario currentUser = getAuthenticatedUser();
         try {
-            PlaneacionCultivo planeacion = getPlaneacionIfAuthorized(planeacionId);
-            Optional<InsumoPlaneacion> insumoPlaneacionOptional = insumoPlaneacionService.getInsumoPlaneacionById(insumoPlaneacionId);
+            PlaneacionCultivo planeacion = getPlaneacionIfAuthorized(planeacionId); // Validar la planeación
+            // Buscar el InsumoPlaneacion, asegurando que pertenece al usuario
+            Optional<InsumoPlaneacion> insumoPlaneacionOptional = insumoPlaneacionService.findByIdAndPlaneacionOwnedByUser(insumoPlaneacionId, currentUser);
 
             if (insumoPlaneacionOptional.isEmpty() || !insumoPlaneacionOptional.get().getPlaneacion().getId().equals(planeacionId)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Asociación insumo-planeación no encontrada o no autorizada.");
@@ -154,35 +199,31 @@ public class InsumoPlaneacionWebController {
 
             model.addAttribute("planeacion", planeacion);
             model.addAttribute("insumoPlaneacion", insumoPlaneacionOptional.get());
-            model.addAttribute("allInsumos", insumoService.getAllInsumos());
+            model.addAttribute("allInsumos", insumoService.findByUsuario(currentUser)); // Solo insumos del usuario
             return "insumos_planeacion/insumo-planeacion-form";
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | SecurityException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/planeaciones";
         }
     }
 
-    // Eliminar un insumo de una planeación
+    // --- ELIMINAR UN INSUMO DE UNA PLANEACIÓN ESPECÍFICA ---
+    // POST /planeaciones/{planeacionId}/insumos/delete/{insumoPlaneacionId}
     @PostMapping("/delete/{insumoPlaneacionId}")
     public String deleteInsumoPlaneacion(@PathVariable Long planeacionId,
                                          @PathVariable Long insumoPlaneacionId,
                                          RedirectAttributes redirectAttributes) {
+        Usuario currentUser = getAuthenticatedUser();
         try {
-            PlaneacionCultivo planeacion = getPlaneacionIfAuthorized(planeacionId); // Verifica autorización
-            Optional<InsumoPlaneacion> insumoPlaneacionOptional = insumoPlaneacionService.getInsumoPlaneacionById(insumoPlaneacionId);
-
-            if (insumoPlaneacionOptional.isEmpty() || !insumoPlaneacionOptional.get().getPlaneacion().getId().equals(planeacion.getId())) { 
-            redirectAttributes.addFlashAttribute("errorMessage", "Asociación insumo-planeación no encontrada o no autorizada para eliminar.");
-            return "redirect:/planeaciones/" + planeacionId + "/insumos";
-            }
-
-            insumoPlaneacionService.deleteInsumoPlaneacion(insumoPlaneacionId);
+            // La validación de permisos se hace dentro del servicio
+            insumoPlaneacionService.deleteInsumoPlaneacion(insumoPlaneacionId, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Insumo eliminado de la planeación exitosamente!");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | SecurityException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error al eliminar el insumo de la planeación: " + e.getMessage());
         }
+        // Siempre redirigir de vuelta a la lista de insumos de la misma planeación
         return "redirect:/planeaciones/" + planeacionId + "/insumos";
     }
 }

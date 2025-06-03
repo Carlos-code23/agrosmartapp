@@ -1,9 +1,11 @@
-package com.projectfinal.spring.agrosmart.agrosmart_application.controller; // Ajusta este paquete si es diferente
+// src/main/java/com/projectfinal/spring/agrosmart/agrosmart_application/controller/InsumoWebController.java
+package com.projectfinal.spring.agrosmart.agrosmart_application.controller;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Insumo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.InsumoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.UsuarioService;
+import com.projectfinal.spring.agrosmart.agrosmart_application.util.UnidadMedida; // ¡Importa la nueva clase!
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,8 +15,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Arrays; // Necesario para Arrays.asList()
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/insumos")
@@ -30,121 +34,102 @@ public class InsumoWebController {
 
     private Usuario getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return usuarioService.findByEmail(username)
-                          .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + username));
+        String userEmail = authentication.getName();
+        return usuarioService.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado en la base de datos."));
     }
 
-    // --- LISTAR INSUMOS ---
+    // Listar todos los insumos del usuario autenticado
     @GetMapping
     public String listInsumos(Model model) {
         Usuario currentUser = getAuthenticatedUser();
-        List<Insumo> insumos = insumoService.findByUsuario(currentUser);
+        List<Insumo> insumos = insumoService.findByUsuario(currentUser); // Obtiene solo los insumos del usuario
         model.addAttribute("insumos", insumos);
         return "insumos/list-insumos";
     }
 
-    // --- MOSTRAR FORMULARIO DE CREACIÓN ---
+    // Mostrar formulario para añadir un nuevo insumo
     @GetMapping("/new")
-    public String showCreateForm(Model model) {
+    public String showAddInsumoForm(Model model) {
         model.addAttribute("insumo", new Insumo());
+        // Añadir las unidades de medida sugeridas al modelo
+        model.addAttribute("unidadesMedida", Arrays.asList(UnidadMedida.values()));
         return "insumos/insumo-form";
     }
 
-    // --- GUARDAR NUEVO INSUMO ---
-    @PostMapping
-    public String saveInsumo(@Valid @ModelAttribute("insumo") Insumo insumo,
-                             BindingResult result,
-                             RedirectAttributes redirectAttributes,
-                             Model model) {
-
-        if (result.hasErrors()) {
-            return "insumos/insumo-form";
-        }
-
-        try {
-            Usuario currentUser = getAuthenticatedUser();
-            insumo.setUsuario(currentUser);
-
-            insumoService.saveInsumo(insumo);
-            redirectAttributes.addFlashAttribute("successMessage", "Insumo guardado exitosamente!");
-            return "redirect:/insumos";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar el insumo: " + e.getMessage());
-            model.addAttribute("insumo", insumo);
-            return "insumos/insumo-form";
-        }
-    }
-
-    // --- MOSTRAR FORMULARIO DE EDICIÓN ---
+    // Mostrar formulario para editar un insumo existente
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String showEditInsumoForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         Usuario currentUser = getAuthenticatedUser();
-        // Usamos findByIdAndUsuario para asegurar que el insumo pertenece al usuario
-        Optional<Insumo> insumoOptional = insumoService.findByIdAndUsuario(id, currentUser);
+        // Buscar el insumo y asegurarse de que pertenece al usuario
+        Optional<Insumo> insumoOptional = insumoService.getInsumoByIdAndUsuario(id, currentUser);
 
         if (insumoOptional.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Insumo no encontrado o no autorizado.");
             return "redirect:/insumos";
         }
-
         model.addAttribute("insumo", insumoOptional.get());
+        // Añadir las unidades de medida sugeridas al modelo
+        model.addAttribute("unidadesMedida", Arrays.asList(UnidadMedida.values()));
         return "insumos/insumo-form";
     }
 
-    // --- ACTUALIZAR INSUMO ---
-    @PostMapping("/update/{id}")
-    public String updateInsumo(@PathVariable Long id,
-                               @Valid @ModelAttribute("insumo") Insumo insumo,
-                               BindingResult result,
-                               RedirectAttributes redirectAttributes,
-                               Model model) {
+    // Procesar el formulario de guardado (creación o actualización)
+    @PostMapping
+    public String saveInsumo(@Valid @ModelAttribute("insumo") Insumo insumo,
+                             BindingResult result,
+                             @RequestParam(value = "unidadMedidaSelect", required = false) String unidadMedidaSelect,
+                             @RequestParam(value = "unidadMedidaCustom", required = false) String unidadMedidaCustom,
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
+        
+        Usuario currentUser = getAuthenticatedUser();
+        insumo.setUsuario(currentUser); // Asegura que el insumo se asocie al usuario actual
+        
+        // Lógica para manejar la unidad de medida: seleccionada o personalizada
+        if ("OTRO".equals(unidadMedidaSelect) && unidadMedidaCustom != null && !unidadMedidaCustom.trim().isEmpty()) {
+            insumo.setUnidadMedida(unidadMedidaCustom.trim());
+        } else if (unidadMedidaSelect != null && !unidadMedidaSelect.isEmpty() && !"OTRO".equals(unidadMedidaSelect)) {
+            // Asegúrate de que el valor seleccionado sea una unidad válida del enum
+            try {
+                UnidadMedida selectedEnum = UnidadMedida.valueOf(unidadMedidaSelect);
+                insumo.setUnidadMedida(selectedEnum.getDescripcion()); // Guardar la descripción de la unidad
+            } catch (IllegalArgumentException e) {
+                result.rejectValue("unidadMedida", "invalid.unidadMedida", "La unidad de medida seleccionada no es válida.");
+            }
+        } else {
+            result.rejectValue("unidadMedida", "required.unidadMedida", "Debe seleccionar o especificar una unidad de medida.");
+        }
 
+
+        // Si hay errores de validación, regresa al formulario
         if (result.hasErrors()) {
-            insumo.setId(id); // Asegura que el ID se mantenga para la vista
+            model.addAttribute("unidadesMedida", Arrays.asList(UnidadMedida.values()));
+            // Si hay un error, el campo custom no se mostrará si no se envía de nuevo
+            model.addAttribute("selectedUnidadMedida", unidadMedidaSelect); // Para mantener la selección del usuario
+            model.addAttribute("customUnidadMedidaValue", unidadMedidaCustom); // Para mantener el valor del campo custom
             return "insumos/insumo-form";
         }
 
         try {
-            Usuario currentUser = getAuthenticatedUser();
-            // Primero, verifica si el insumo existe y pertenece al usuario actual
-            Optional<Insumo> existingInsumoOptional = insumoService.findByIdAndUsuario(id, currentUser);
-
-            if (existingInsumoOptional.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Insumo no encontrado o no autorizado.");
-                return "redirect:/insumos";
-            }
-
-            // Si llegamos aquí, el insumo existe y pertenece al usuario.
-            // Asignamos el ID y el usuario al objeto 'insumo' que viene del formulario.
-            insumo.setId(id);
-            insumo.setUsuario(currentUser);
-
-            insumoService.saveInsumo(insumo); // Save para actualizar
-            redirectAttributes.addFlashAttribute("successMessage", "Insumo actualizado exitosamente!");
-            return "redirect:/insumos";
+            insumoService.saveInsumo(insumo);
+            redirectAttributes.addFlashAttribute("successMessage", "Insumo guardado exitosamente!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al actualizar el insumo: " + e.getMessage());
-            insumo.setId(id); // Asegura que el ID se mantenga para la vista en caso de error
-            return "insumos/insumo-form";
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar el insumo: " + e.getMessage());
         }
+        return "redirect:/insumos";
     }
 
-    // --- ELIMINAR INSUMO ---
+    // Eliminar un insumo
     @PostMapping("/delete/{id}")
     public String deleteInsumo(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Usuario currentUser = getAuthenticatedUser();
-        // Usamos findByIdAndUsuario para asegurar que el insumo pertenece al usuario antes de eliminar
-        Optional<Insumo> insumoOptional = insumoService.findByIdAndUsuario(id, currentUser);
-
-        if (insumoOptional.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Insumo no encontrado o no autorizado para eliminar.");
-            return "redirect:/insumos";
-        }
-
         try {
-            insumoService.deleteInsumo(id);
+            // Eliminar el insumo solo si pertenece al usuario autenticado
+            insumoService.deleteInsumoByIdAndUsuario(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Insumo eliminado exitosamente!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error al eliminar el insumo: " + e.getMessage());
         }

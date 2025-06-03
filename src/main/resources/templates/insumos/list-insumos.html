@@ -16,6 +16,7 @@
                 <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
                 <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
                 <li><a th:href="@{/insumos}" class="active">Insumos</a></li>
+                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
                 <li>
                     <form th:action="@{/logout}" method="post" style="display:inline;">
                         <button type="submit" class="logout-button">Cerrar Sesión</button>
@@ -27,7 +28,7 @@
 
     <main>
         <section class="crud-section">
-            <h2>Gestión de Insumos</h2>
+            <h2>Insumos</h2>
 
             <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
             <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
@@ -44,7 +45,7 @@
                         <th>Nombre</th>
                         <th>Tipo</th>
                         <th>Proveedor</th>
-                        <th>Unidad Medida</th>
+                        <th>Unidad de Medida</th>
                         <th>Precio Unitario</th>
                         <th>Descripción</th>
                         <th>Acciones</th>
@@ -53,10 +54,9 @@
                 <tbody>
                     <tr th:each="insumo : ${insumos}">
                         <td th:text="${insumo.nombre}"></td>
-                        <td th:text="${insumo.tipo}"></td>
-                        <td th:text="${insumo.proveedor}"></td>
+                        <td th:text="${insumo.tipo.name().replace('_', ' ')}"></td> <td th:text="${insumo.proveedor}"></td>
                         <td th:text="${insumo.unidadMedida}"></td>
-                        <td th:text="${insumo.precioUnitario}"></td>
+                        <td th:text="${#numbers.formatDecimal(insumo.precioUnitario, 1, 2)}"></td>
                         <td th:text="${insumo.descripcion}"></td>
                         <td>
                             <a th:href="@{/insumos/edit/{id}(id=${insumo.id})}" class="button-small edit-button">Editar</a>

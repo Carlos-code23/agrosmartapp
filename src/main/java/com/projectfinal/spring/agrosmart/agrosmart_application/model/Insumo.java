@@ -6,13 +6,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.ArrayList;
+
+import com.projectfinal.spring.agrosmart.agrosmart_application.util.TipoInsumo;
+
 import lombok.Data; 
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "insumos")
-@Data // Genera getters, setters, equals, hashCode y toString automáticamente
+@Data 
 public class Insumo {
 
     @Id
@@ -24,10 +27,9 @@ public class Insumo {
     @Column(nullable = false, length = 255)
     private String nombre;
 
-    @NotBlank(message = "El tipo de insumo es requerido")
-    @Size(max = 100, message = "El tipo no puede exceder los 100 caracteres")
-    @Column(length = 100)
-    private String tipo; // Ej. 'Fertilizante', 'Semilla', 'Pesticida'
+    @Enumerated(EnumType.STRING) // Guarda el nombre del enum (SEMILLAS, FERTILIZANTES, etc.) en la BD
+    @Column(nullable = false)
+    private TipoInsumo tipo;// Ej. 'Fertilizante', 'Semilla', 'Pesticida'
 
     @Size(max = 255, message = "El proveedor no puede exceder los 255 caracteres")
     @Column(name = "proveedor", length = 255) // Puede ser null si no es obligatorio al inicio

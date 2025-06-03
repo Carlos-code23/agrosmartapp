@@ -1,14 +1,15 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.controller;
 
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo; // Importar EtapaCultivo
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Parcela;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.PlaneacionCultivo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoCultivo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
+import com.projectfinal.spring.agrosmart.agrosmart_application.service.EtapaCultivoService; // Importar el servicio
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.ParcelaService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.PlaneacionCultivoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.TipoCultivoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.UsuarioService;
-
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,163 +30,161 @@ public class PlaneacionCultivoWebController {
     private final ParcelaService parcelaService;
     private final TipoCultivoService tipoCultivoService;
     private final UsuarioService usuarioService;
+    private final EtapaCultivoService etapaCultivoService; // Inyectar el servicio de etapas
 
     public PlaneacionCultivoWebController(PlaneacionCultivoService planeacionCultivoService,
                                         ParcelaService parcelaService,
                                         TipoCultivoService tipoCultivoService,
-                                        UsuarioService usuarioService) {
+                                        UsuarioService usuarioService,
+                                        EtapaCultivoService etapaCultivoService) { // Añadir al constructor
         this.planeacionCultivoService = planeacionCultivoService;
         this.parcelaService = parcelaService;
         this.tipoCultivoService = tipoCultivoService;
         this.usuarioService = usuarioService;
+        this.etapaCultivoService = etapaCultivoService; // Asignar
     }
 
     private Usuario getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
         return usuarioService.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado en la base de datos."));
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado en la base de datos."));
     }
 
-    // Mostrar todas las planeaciones de cultivo del usuario autenticado
+    // --- LISTAR PLANEACIONES DE CULTIVO ---
     @GetMapping
     public String listPlaneaciones(Model model) {
         Usuario currentUser = getAuthenticatedUser();
-        List<PlaneacionCultivo> planeaciones = planeacionCultivoService.getPlaneacionesByUsuarioId(currentUser.getId());
+        List<PlaneacionCultivo> planeaciones = planeacionCultivoService.findByUsuario(currentUser);
         model.addAttribute("planeaciones", planeaciones);
-        return "planeaciones/list-planeaciones"; // src/main/resources/templates/planeaciones/list-planeaciones.html
+        return "planeaciones/list-planeaciones";
     }
 
-    // Mostrar formulario para crear una nueva planeación
-    @GetMapping("/new")
-    public String showCreateForm(Model model) {
+    // --- MOSTRAR FORMULARIO DE CREACIÓN/EDICIÓN ---
+    @GetMapping({"/new", "/edit/{id}"})
+    public String showForm(@PathVariable(required = false) Long id, Model model, RedirectAttributes redirectAttributes) {
         Usuario currentUser = getAuthenticatedUser();
-        model.addAttribute("planeacion", new PlaneacionCultivo());
-        model.addAttribute("parcelas", parcelaService.getParcelasByUsuarioId(currentUser.getId()));
-        model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
-        return "planeaciones/planeacion-form"; // src/main/resources/templates/planeaciones/planeacion-form.html
-    }
+        
+        // Cargar las parcelas del usuario actual
+        List<Parcela> parcelas = parcelaService.findByUsuario(currentUser);
+        // Cargar los tipos de cultivo disponibles
+        List<TipoCultivo> tiposCultivo = tipoCultivoService.getAllTiposCultivo(); // Asumo que son globales o que también tienes un findByUsuario para ellos
+        // Cargar las etapas de cultivo disponibles para el usuario actual
+        List<EtapaCultivo> etapasCultivo = etapaCultivoService.findByUsuario(currentUser); // Obtener etapas del usuario
 
-    // Procesar el formulario de creación de planeación
-    @PostMapping
-    public String savePlaneacion(@Valid @ModelAttribute("planeacion") PlaneacionCultivo planeacion,
-                                 BindingResult result,
-                                 Model model,
-                                 RedirectAttributes redirectAttributes) {
-
-        // Si la parcela o tipoCultivo no están bien asociados desde el formulario, podrían ser null
-        // Esto podría necesitar un DTO específico para validar IDs antes de convertirlos a objetos.
-        // Por ahora, asumimos que los IDs vienen y los servicios los encuentran.
-        if (planeacion.getParcela() == null || planeacion.getParcela().getId() == null) {
-            result.rejectValue("parcela", "null.parcela", "Debe seleccionar una parcela.");
+        if (parcelas.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Debe registrar al menos una parcela antes de crear una planeación.");
+            return "redirect:/parcelas/new"; // Redirigir para crear parcela
         }
-        if (planeacion.getTipoCultivo() == null || planeacion.getTipoCultivo().getId() == null) {
-            result.rejectValue("tipoCultivo", "null.tipoCultivo", "Debe seleccionar un tipo de cultivo.");
+        if (tiposCultivo.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No hay tipos de cultivo registrados. Contacte al administrador.");
+            return "redirect:/tipos-cultivo"; // O a una página de error
+        }
+        if (etapasCultivo.isEmpty()) {
+             redirectAttributes.addFlashAttribute("errorMessage", "No hay etapas de cultivo registradas. Contacte al administrador o cree una.");
+            return "redirect:/etapas/new"; // Redirigir para crear etapa si no hay
         }
 
-        if (result.hasErrors()) {
-            Usuario currentUser = getAuthenticatedUser();
-            model.addAttribute("parcelas", parcelaService.getParcelasByUsuarioId(currentUser.getId()));
-            model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
-            return "planeaciones/planeacion-form";
+        PlaneacionCultivo planeacionCultivo;
+        if (id != null) {
+            // Buscar la planeación y asegurarse de que pertenece al usuario
+            Optional<PlaneacionCultivo> optionalPlaneacion = planeacionCultivoService.getPlaneacionCultivoByIdAndUsuario(id, currentUser);
+            if (optionalPlaneacion.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Planeación de cultivo no encontrada o no autorizada.");
+                return "redirect:/planeaciones";
+            }
+            planeacionCultivo = optionalPlaneacion.get();
+        } else {
+            planeacionCultivo = new PlaneacionCultivo();
         }
 
-        // Asignar el usuario autenticado a la planeación
-        Usuario currentUser = getAuthenticatedUser();
-        planeacion.setUsuario(currentUser);
-
-        try {
-            planeacionCultivoService.savePlaneacionCultivo(planeacion); // El servicio calcula numeroSemillas
-            redirectAttributes.addFlashAttribute("successMessage", "Planeación de cultivo guardada exitosamente!");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/planeaciones/new"; // Vuelve al formulario si hay error de lógica
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar la planeación: " + e.getMessage());
-        }
-
-        return "redirect:/planeaciones";
-    }
-
-    // Mostrar formulario para editar una planeación existente
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        Usuario currentUser = getAuthenticatedUser();
-        Optional<PlaneacionCultivo> planeacionOptional = planeacionCultivoService.getPlaneacionCultivoById(id);
-
-        if (planeacionOptional.isEmpty() || !planeacionOptional.get().getUsuario().getId().equals(currentUser.getId())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Planeación no encontrada o no tienes permiso para editarla.");
-            return "redirect:/planeaciones";
-        }
-
-        model.addAttribute("planeacion", planeacionOptional.get());
-        model.addAttribute("parcelas", parcelaService.getParcelasByUsuarioId(currentUser.getId()));
-        model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
+        model.addAttribute("planeacionCultivo", planeacionCultivo);
+        model.addAttribute("parcelas", parcelas);
+        model.addAttribute("tiposCultivo", tiposCultivo);
+        model.addAttribute("etapasCultivo", etapasCultivo); // Añadir las etapas al modelo
         return "planeaciones/planeacion-form";
     }
 
-    // Procesar el formulario de actualización de planeación
-    @PostMapping("/update/{id}")
-    public String updatePlaneacion(@PathVariable Long id,
-                                   @Valid @ModelAttribute("planeacion") PlaneacionCultivo planeacionDetails,
-                                   BindingResult result,
-                                   Model model,
-                                   RedirectAttributes redirectAttributes) {
+    // --- PROCESAR FORMULARIO (GUARDAR/ACTUALIZAR PLANEACIÓN) ---
+    @PostMapping
+    public String savePlaneacion(@Valid @ModelAttribute("planeacionCultivo") PlaneacionCultivo planeacionCultivo,
+                                 BindingResult result,
+                                 RedirectAttributes redirectAttributes,
+                                 Model model) {
+        Usuario currentUser = getAuthenticatedUser();
+        planeacionCultivo.setUsuario(currentUser); // Asociar la planeación al usuario actual
 
-        if (planeacionDetails.getParcela() == null || planeacionDetails.getParcela().getId() == null) {
-            result.rejectValue("parcela", "null.parcela", "Debe seleccionar una parcela.");
+        // Recargar las listas para el formulario en caso de error de validación
+        List<Parcela> parcelas = parcelaService.findByUsuario(currentUser);
+        List<TipoCultivo> tiposCultivo = tipoCultivoService.getAllTiposCultivo();
+        List<EtapaCultivo> etapasCultivo = etapaCultivoService.findByUsuario(currentUser); // Recargar etapas
+
+        // Validar relaciones antes de guardar si no hay errores de campos simples
+        if (!result.hasErrors()) {
+            // Asegurarse de que la parcela seleccionada pertenece al usuario
+            Optional<Parcela> selectedParcela = parcelas.stream()
+                .filter(p -> p.getId().equals(planeacionCultivo.getParcela().getId()))
+                .findFirst();
+            if (selectedParcela.isEmpty()) {
+                result.rejectValue("parcela", "invalid.parcela", "La parcela seleccionada no es válida o no le pertenece.");
+            } else {
+                planeacionCultivo.setParcela(selectedParcela.get());
+            }
+
+            // Asegurarse de que el tipo de cultivo seleccionado es válido
+            Optional<TipoCultivo> selectedTipoCultivo = tiposCultivo.stream()
+                .filter(tc -> tc.getId().equals(planeacionCultivo.getTipoCultivo().getId()))
+                .findFirst();
+            if (selectedTipoCultivo.isEmpty()) {
+                result.rejectValue("tipoCultivo", "invalid.tipoCultivo", "El tipo de cultivo seleccionado no es válido.");
+            } else {
+                planeacionCultivo.setTipoCultivo(selectedTipoCultivo.get());
+            }
+
+            // Asegurarse de que la etapa de cultivo seleccionada es válida y pertenece al usuario
+            Optional<EtapaCultivo> selectedEtapa = etapasCultivo.stream() // Usar las etapas del usuario
+                .filter(ec -> ec.getId().equals(planeacionCultivo.getEtapaCultivo().getId()))
+                .findFirst();
+            if (selectedEtapa.isEmpty()) {
+                result.rejectValue("etapaCultivo", "invalid.etapaCultivo", "La etapa de cultivo seleccionada no es válida o no le pertenece.");
+            } else {
+                planeacionCultivo.setEtapaCultivo(selectedEtapa.get()); // Asignar la entidad completa
+            }
         }
-        if (planeacionDetails.getTipoCultivo() == null || planeacionDetails.getTipoCultivo().getId() == null) {
-            result.rejectValue("tipoCultivo", "null.tipoCultivo", "Debe seleccionar un tipo de cultivo.");
-        }
+
 
         if (result.hasErrors()) {
-            Usuario currentUser = getAuthenticatedUser();
-            model.addAttribute("parcelas", parcelaService.getParcelasByUsuarioId(currentUser.getId()));
-            model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
-            planeacionDetails.setId(id); // Asegura que el ID se mantenga
+            model.addAttribute("parcelas", parcelas);
+            model.addAttribute("tiposCultivo", tiposCultivo);
+            model.addAttribute("etapasCultivo", etapasCultivo); // Añadir etapas al modelo en caso de error
             return "planeaciones/planeacion-form";
         }
 
-        Usuario currentUser = getAuthenticatedUser();
-        Optional<PlaneacionCultivo> existingPlaneacion = planeacionCultivoService.getPlaneacionCultivoById(id);
-        if (existingPlaneacion.isEmpty() || !existingPlaneacion.get().getUsuario().getId().equals(currentUser.getId())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Planeación no encontrada o no tienes permiso para actualizarla.");
-            return "redirect:/planeaciones";
-        }
-
-        // Asegurar que el usuario no se sobrescriba.
-        planeacionDetails.setUsuario(existingPlaneacion.get().getUsuario());
-        
         try {
-            planeacionCultivoService.updatePlaneacionCultivo(id, planeacionDetails);
-            redirectAttributes.addFlashAttribute("successMessage", "Planeación de cultivo actualizada exitosamente!");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/planeaciones/edit/" + id; // Vuelve al formulario de edición si hay error de lógica
+            planeacionCultivoService.savePlaneacionCultivo(planeacionCultivo);
+            redirectAttributes.addFlashAttribute("successMessage", "Planeación de cultivo guardada exitosamente!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al actualizar la planeación: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar la planeación de cultivo: " + e.getMessage());
+            // Recargar las listas si hay un error de servicio y se vuelve al formulario
+            model.addAttribute("parcelas", parcelas);
+            model.addAttribute("tiposCultivo", tiposCultivo);
+            model.addAttribute("etapasCultivo", etapasCultivo);
+            return "planeaciones/planeacion-form";
         }
-
         return "redirect:/planeaciones";
     }
 
-    // Eliminar una planeación
+    // --- ELIMINAR PLANEACIÓN DE CULTIVO ---
     @PostMapping("/delete/{id}")
     public String deletePlaneacion(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Usuario currentUser = getAuthenticatedUser();
-        Optional<PlaneacionCultivo> planeacionOptional = planeacionCultivoService.getPlaneacionCultivoById(id);
-
-        if (planeacionOptional.isEmpty() || !planeacionOptional.get().getUsuario().getId().equals(currentUser.getId())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Planeación no encontrada o no tienes permiso para eliminarla.");
-            return "redirect:/planeaciones";
-        }
-
         try {
-            planeacionCultivoService.deletePlaneacionCultivo(id);
+            planeacionCultivoService.deletePlaneacionCultivo(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Planeación de cultivo eliminada exitosamente!");
+        } catch (IllegalArgumentException | SecurityException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al eliminar la planeación: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al eliminar la planeación de cultivo: " + e.getMessage());
         }
         return "redirect:/planeaciones";
     }

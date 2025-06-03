@@ -28,11 +28,11 @@ public class InsumoPlaneacion {
     @JoinColumn(name = "insumo_id", nullable = false)
     private Insumo insumo;
 
-    @Column(name = "cantidad", nullable = false, precision = 10, scale = 2)
+    @Column(name = "cantidad", nullable = false, precision = 10, scale = 3)
     private BigDecimal cantidad;
 
-    @Column(name = "costo_total", nullable = false, precision = 10, scale = 2)
-    private BigDecimal costoTotal;
+    @Column(name = "total_insumo", nullable = false, precision = 10, scale = 2) // 2 decimales para dinero
+    private BigDecimal totalInsumo;
 
     @Column(name = "fecha_registro")
     private LocalDate fechaRegistro;

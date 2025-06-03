@@ -1,11 +1,15 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.service;
 
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo; // ¡Importa EtapaCultivo!
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.InsumoPlaneacion; // Asegúrate de importar esto si manejas insumos en planeación
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Parcela;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.PlaneacionCultivo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoCultivo;
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario; // ¡Importa Usuario!
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.ParcelaRepository;
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.PlaneacionCultivoRepository;
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.TipoCultivoRepository;
+import com.projectfinal.spring.agrosmart.agrosmart_application.repository.EtapaCultivoRepository; // ¡Importa EtapaCultivoRepository!
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -21,71 +25,88 @@ public class PlaneacionCultivoService {
     private final PlaneacionCultivoRepository planeacionCultivoRepository;
     private final ParcelaRepository parcelaRepository;
     private final TipoCultivoRepository tipoCultivoRepository;
+    private final EtapaCultivoRepository etapaCultivoRepository; // Inyecta el repositorio de etapas
 
     public PlaneacionCultivoService(PlaneacionCultivoRepository planeacionCultivoRepository,
-                                  ParcelaRepository parcelaRepository,
-                                  TipoCultivoRepository tipoCultivoRepository) {
+                                    ParcelaRepository parcelaRepository,
+                                    TipoCultivoRepository tipoCultivoRepository,
+                                    EtapaCultivoRepository etapaCultivoRepository) { // Añade al constructor
         this.planeacionCultivoRepository = planeacionCultivoRepository;
         this.parcelaRepository = parcelaRepository;
         this.tipoCultivoRepository = tipoCultivoRepository;
+        this.etapaCultivoRepository = etapaCultivoRepository; // Asigna
     }
 
     /**
-     * Guarda una nueva planeación de cultivo, calculando la densidad de siembra.
-     * @param planeacionCultivo El objeto PlaneacionCultivo a guardar (con Parcela y TipoCultivo asociados).
+     * Guarda una nueva planeación de cultivo o actualiza una existente.
+     * @param planeacionCultivo El objeto PlaneacionCultivo a guardar (con Parcela, TipoCultivo y EtapaCultivo asociados, y Usuario).
      * @return La planeación de cultivo guardada.
      */
     public PlaneacionCultivo savePlaneacionCultivo(PlaneacionCultivo planeacionCultivo) {
-        // 1. Obtener los objetos completos de Parcela y TipoCultivo desde la BD
-        // Esto es crucial porque el objeto "planeacionCultivo" que llega puede tener solo los IDs
-        Parcela parcela = parcelaRepository.findById(planeacionCultivo.getParcela().getId())
-                                        .orElseThrow(() -> new RuntimeException("Parcela no encontrada con ID: " + planeacionCultivo.getParcela().getId()));
-        TipoCultivo tipoCultivo = tipoCultivoRepository.findById(planeacionCultivo.getTipoCultivo().getId())
-                                                .orElseThrow(() -> new RuntimeException("Tipo de cultivo no encontrado con ID: " + planeacionCultivo.getTipoCultivo().getId()));
-
-        // Asegurarse de que los objetos completos están asociados antes de guardar
-        planeacionCultivo.setParcela(parcela);
-        planeacionCultivo.setTipoCultivo(tipoCultivo);
-        // planeacionCultivo.setUsuario(usuarioRepository.findById(planeacionCultivo.getUsuario().getId()).orElseThrow(...)); // Si el usuario no se setea directamente en el controlador
-
-        // 2. Realizar el cálculo de la densidad de siembra
-        BigDecimal areaEnM2 = convertAreaToM2(parcela.getTamano(), parcela.getUnidadMedida());
-        BigDecimal distanciaSurco = tipoCultivo.getDistanciaSurco();
-        BigDecimal distanciaPlanta = tipoCultivo.getDistanciaPlanta();
-
-        if (distanciaSurco == null || distanciaPlanta == null ||
-            distanciaSurco.compareTo(BigDecimal.ZERO) == 0 ||
-            distanciaPlanta.compareTo(BigDecimal.ZERO) == 0) {
-            // Podrías lanzar una excepción más específica o un mensaje de error al usuario
-            throw new IllegalArgumentException("Las distancias de surco y planta deben estar definidas y ser mayores que cero para el tipo de cultivo seleccionado: " + tipoCultivo.getNombre());
+        // Asegúrate de que las entidades relacionadas están cargadas completamente
+        // (Esto es redundante si ya lo haces en el controlador, pero es una buena práctica de seguridad aquí)
+        if (planeacionCultivo.getParcela() != null && planeacionCultivo.getParcela().getId() != null) {
+            Parcela parcela = parcelaRepository.findById(planeacionCultivo.getParcela().getId())
+                                            .orElseThrow(() -> new RuntimeException("Parcela no encontrada con ID: " + planeacionCultivo.getParcela().getId()));
+            planeacionCultivo.setParcela(parcela);
         }
 
-        BigDecimal espacioPorPlanta = distanciaSurco.multiply(distanciaPlanta);
+        if (planeacionCultivo.getTipoCultivo() != null && planeacionCultivo.getTipoCultivo().getId() != null) {
+            TipoCultivo tipoCultivo = tipoCultivoRepository.findById(planeacionCultivo.getTipoCultivo().getId())
+                                                        .orElseThrow(() -> new RuntimeException("Tipo de cultivo no encontrado con ID: " + planeacionCultivo.getTipoCultivo().getId()));
+            planeacionCultivo.setTipoCultivo(tipoCultivo);
+        }
 
-        // La fórmula es areaTotal(m2) / (distanciaSurco * distanciaPlanta)
-        // Usamos RoundingMode.HALF_UP para redondear al entero más cercano
-        BigDecimal numeroSemillasCalculado = areaEnM2.divide(espacioPorPlanta, 0, RoundingMode.HALF_UP);
+        // Manejo de la etapa de cultivo
+        if (planeacionCultivo.getEtapaCultivo() != null && planeacionCultivo.getEtapaCultivo().getId() != null) {
+            EtapaCultivo etapaCultivo = etapaCultivoRepository.findById(planeacionCultivo.getEtapaCultivo().getId())
+                                                            .orElseThrow(() -> new RuntimeException("Etapa de cultivo no encontrada con ID: " + planeacionCultivo.getEtapaCultivo().getId()));
+            planeacionCultivo.setEtapaCultivo(etapaCultivo);
+        } else {
+             throw new IllegalArgumentException("Debe seleccionar una etapa de cultivo.");
+        }
 
-        planeacionCultivo.setNumeroSemillas(numeroSemillasCalculado);
 
-        // 3. Guardar la planeación de cultivo
+        // Recalcular la densidad de siembra (si aplica)
+        if (planeacionCultivo.getParcela() != null && planeacionCultivo.getTipoCultivo() != null) {
+            BigDecimal areaEnM2 = convertAreaToM2(planeacionCultivo.getParcela().getTamano(), planeacionCultivo.getParcela().getUnidadMedida());
+            BigDecimal distanciaSurco = planeacionCultivo.getTipoCultivo().getDistanciaSurco();
+            BigDecimal distanciaPlanta = planeacionCultivo.getTipoCultivo().getDistanciaPlanta();
+
+            if (distanciaSurco == null || distanciaPlanta == null ||
+                distanciaSurco.compareTo(BigDecimal.ZERO) == 0 ||
+                distanciaPlanta.compareTo(BigDecimal.ZERO) == 0) {
+                // No lanzar excepción aquí, ya que el controlador ya lo validará en el BindingResult.
+                // Si llegamos aquí con valores nulos/cero, es porque la validación del controlador falló o no se hizo.
+                // Podemos asignar null o 0 al número de semillas o simplemente permitir que la validación del controlador lo capture.
+                // Por ahora, mantendré la excepción para la lógica de negocio en el servicio si se llega aquí.
+                throw new IllegalArgumentException("Las distancias de surco y planta deben estar definidas y ser mayores que cero para el tipo de cultivo seleccionado: " + planeacionCultivo.getTipoCultivo().getNombre());
+            }
+
+            BigDecimal espacioPorPlanta = distanciaSurco.multiply(distanciaPlanta);
+            BigDecimal numeroSemillasCalculado = areaEnM2.divide(espacioPorPlanta, 0, RoundingMode.HALF_UP);
+            planeacionCultivo.setNumeroSemillas(numeroSemillasCalculado); // Convertir a Double
+        }
+
         return planeacionCultivoRepository.save(planeacionCultivo);
     }
 
-    /**
-     * Obtiene una planeación de cultivo por su ID.
-     * @param id El ID de la planeación.
-     * @return Un Optional que contiene la planeación si se encuentra, o vacío si no.
-     */
     @Transactional(readOnly = true)
     public Optional<PlaneacionCultivo> getPlaneacionCultivoById(Long id) {
         return planeacionCultivoRepository.findById(id);
     }
 
     /**
-     * Obtiene todas las planeaciones de cultivo.
-     * @return Una lista de todas las planeaciones de cultivo.
+     * Obtiene una planeación de cultivo por su ID y el usuario al que pertenece.
+     * @param id El ID de la planeación.
+     * @param usuario El usuario al que debe pertenecer la planeación.
+     * @return Un Optional que contiene la planeación si se encuentra y pertenece al usuario, o vacío si no.
      */
+    @Transactional(readOnly = true)
+    public Optional<PlaneacionCultivo> getPlaneacionCultivoByIdAndUsuario(Long id, Usuario usuario) {
+        return planeacionCultivoRepository.findByIdAndUsuario(id, usuario);
+    }
+
     @Transactional(readOnly = true)
     public List<PlaneacionCultivo> getAllPlaneacionesCultivo() {
         return planeacionCultivoRepository.findAll();
@@ -93,84 +114,56 @@ public class PlaneacionCultivoService {
 
     /**
      * Obtiene las planeaciones de cultivo de un usuario específico.
-     * @param usuarioId El ID del usuario.
+     * @param usuario El objeto Usuario.
      * @return Una lista de planeaciones de cultivo del usuario.
      */
     @Transactional(readOnly = true)
-    public List<PlaneacionCultivo> getPlaneacionesByUsuarioId(Long usuarioId) {
-        return planeacionCultivoRepository.findByUsuarioId(usuarioId);
+    public List<PlaneacionCultivo> findByUsuario(Usuario usuario) { // ¡Cambiado! Ahora recibe un objeto Usuario
+        return planeacionCultivoRepository.findByUsuario(usuario);
     }
 
     /**
-     * Actualiza una planeación de cultivo existente.
-     * Se recalcula la densidad de siembra si cambian la parcela o el tipo de cultivo.
-     * @param id El ID de la planeación a actualizar.
-     * @param planeacionCultivoDetails Los detalles actualizados.
-     * @return La planeación de cultivo actualizada.
-     * @throws RuntimeException si la planeación no es encontrada.
-     * @throws IllegalArgumentException si las distancias del tipo de cultivo son inválidas.
+     * Elimina una planeación de cultivo por su ID, verificando que pertenece al usuario.
+     * @param id El ID de la planeación a eliminar.
+     * @param currentUser El usuario que intenta eliminar la planeación.
+     * @throws IllegalArgumentException si la planeación no es encontrada.
+     * @throws SecurityException si el usuario no tiene permiso para eliminar la planeación.
      */
+    public void deletePlaneacionCultivo(Long id, Usuario currentUser) { // ¡Cambiado! Ahora recibe un objeto Usuario
+        PlaneacionCultivo planeacion = planeacionCultivoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Planeación de cultivo no encontrada con ID: " + id));
+
+        if (!planeacion.getUsuario().getId().equals(currentUser.getId())) {
+            throw new SecurityException("No tiene permiso para eliminar esta planeación de cultivo.");
+        }
+        planeacionCultivoRepository.deleteById(id);
+    }
+
+    // El método updatePlaneacionCultivo ya no es estrictamente necesario si savePlaneacionCultivo
+    // maneja tanto la creación como la actualización. Si lo conservas, ajusta su lógica.
+    // Para consistencia con la refactorización que se hizo en Insumo, te recomiendo quitarlo
+    // y dejar que savePlaneacionCultivo maneje la actualización.
+    // Si decides mantenerlo, asegúrate de que también maneje la EtapaCultivo y la validación de seguridad.
+    /*
     public PlaneacionCultivo updatePlaneacionCultivo(Long id, PlaneacionCultivo planeacionCultivoDetails) {
         PlaneacionCultivo existingPlaneacion = planeacionCultivoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Planeación de cultivo no encontrada con ID: " + id));
 
-        // Actualizar campos básicos
-        existingPlaneacion.setFechaInicio(planeacionCultivoDetails.getFechaInicio());
-        existingPlaneacion.setFechaFinEstimada(planeacionCultivoDetails.getFechaFinEstimada());
-        existingPlaneacion.setEstimacionCosto(planeacionCultivoDetails.getEstimacionCosto());
-        existingPlaneacion.setDescripcion(planeacionCultivoDetails.getDescripcion());
-        existingPlaneacion.setEstado(planeacionCultivoDetails.getEstado());
+        // ... lógica de actualización de campos y recalculado ...
 
-        // Verificar si la Parcela o el TipoCultivo han cambiado para recalcular la densidad
-        boolean needsRecalculation = false;
-        if (!existingPlaneacion.getParcela().getId().equals(planeacionCultivoDetails.getParcela().getId())) {
-            Parcela nuevaParcela = parcelaRepository.findById(planeacionCultivoDetails.getParcela().getId())
-                    .orElseThrow(() -> new RuntimeException("Nueva Parcela no encontrada con ID: " + planeacionCultivoDetails.getParcela().getId()));
-            existingPlaneacion.setParcela(nuevaParcela);
-            needsRecalculation = true;
-        }
-        if (!existingPlaneacion.getTipoCultivo().getId().equals(planeacionCultivoDetails.getTipoCultivo().getId())) {
-            TipoCultivo nuevoTipoCultivo = tipoCultivoRepository.findById(planeacionCultivoDetails.getTipoCultivo().getId())
-                    .orElseThrow(() -> new RuntimeException("Nuevo Tipo de Cultivo no encontrado con ID: " + planeacionCultivoDetails.getTipoCultivo().getId()));
-            existingPlaneacion.setTipoCultivo(nuevoTipoCultivo);
-            needsRecalculation = true;
-        }
-
-        if (needsRecalculation) {
-            BigDecimal areaEnM2 = convertAreaToM2(existingPlaneacion.getParcela().getTamano(), existingPlaneacion.getParcela().getUnidadMedida());
-            BigDecimal distanciaSurco = existingPlaneacion.getTipoCultivo().getDistanciaSurco();
-            BigDecimal distanciaPlanta = existingPlaneacion.getTipoCultivo().getDistanciaPlanta();
-
-            if (distanciaSurco == null || distanciaPlanta == null ||
-                distanciaSurco.compareTo(BigDecimal.ZERO) == 0 ||
-                distanciaPlanta.compareTo(BigDecimal.ZERO) == 0) {
-                throw new IllegalArgumentException("Las distancias de surco y planta deben estar definidas y ser mayores que cero para el tipo de cultivo seleccionado.");
-            }
-
-            BigDecimal espacioPorPlanta = distanciaSurco.multiply(distanciaPlanta);
-            BigDecimal numeroSemillasCalculado = areaEnM2.divide(espacioPorPlanta, 0, RoundingMode.HALF_UP);
-            existingPlaneacion.setNumeroSemillas(numeroSemillasCalculado);
+        // Asegúrate de actualizar la etapa también:
+        if (planeacionCultivoDetails.getEtapaCultivo() != null && planeacionCultivoDetails.getEtapaCultivo().getId() != null) {
+            EtapaCultivo etapaCultivo = etapaCultivoRepository.findById(planeacionCultivoDetails.getEtapaCultivo().getId())
+                                                            .orElseThrow(() -> new RuntimeException("Etapa de cultivo no encontrada con ID: " + planeacionCultivoDetails.getEtapaCultivo().getId()));
+            existingPlaneacion.setEtapaCultivo(etapaCultivo);
+        } else {
+             throw new IllegalArgumentException("Debe seleccionar una etapa de cultivo.");
         }
 
         return planeacionCultivoRepository.save(existingPlaneacion);
     }
+    */
 
-
-    /**
-     * Elimina una planeación de cultivo por su ID.
-     * @param id El ID de la planeación a eliminar.
-     */
-    public void deletePlaneacionCultivo(Long id) {
-        planeacionCultivoRepository.deleteById(id);
-    }
-
-    /**
-     * Método de utilidad para convertir el área de la parcela a metros cuadrados.
-     * @param tamano El tamaño de la parcela.
-     * @param unidadMedida La unidad de medida ('hectareas' o 'm2').
-     * @return El tamaño en metros cuadrados.
-     * @throws IllegalArgumentException si la unidad de medida no es soportada.
-     */
     private BigDecimal convertAreaToM2(BigDecimal tamano, String unidadMedida) {
         if ("hectareas".equalsIgnoreCase(unidadMedida)) {
             return tamano.multiply(new BigDecimal("10000")); // 1 hectárea = 10,000 m2

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${insumoPlaneacion.id} ? 'Editar Insumo en Planeación - AgroSmart' : 'Añadir Insumo a Planeación - AgroSmart'"></title>
+    <title th:text="${insumoPlaneacion.id} ? 'Editar Insumo en Planeación - AgroSmart' : 'Asignar Insumo a Planeación - AgroSmart'"></title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -28,42 +28,41 @@
 
     <main>
         <section class="auth-form-container">
-            <h2 th:text="${insumoPlaneacion.id} ? 'Editar Insumo para Planeación: ' + ${planeacion.nombre} : 'Añadir Insumo a Planeación: ' + ${planeacion.nombre}"></h2>
+            <h2 th:text="${insumoPlaneacion.id} ? 'Editar Insumo en Planeación para ' + ${planeacion.nombre} : 'Asignar Insumo a Planeación: ' + ${planeacion.nombre}"></h2>
 
-            <form th:action="${insumoPlaneacion.id} ? @{/planeaciones/{planeacionId}/insumos/update/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${insumoPlaneacion.id})} : @{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" th:object="${insumoPlaneacion}" method="post" class="auth-form">
+            <form th:action="${insumoPlaneacion.id} ? @{/planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${insumoPlaneacion.id})} : @{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" th:object="${insumoPlaneacion}" method="post" class="auth-form">
 
                 <input type="hidden" th:field="*{id}" th:if="${insumoPlaneacion.id}" />
-                <input type="hidden" th:field="*{planeacion.id}" th:value="${planeacion.id}" />
+                <input type="hidden" th:field="*{planeacion.id}" />
 
                 <div class="form-group">
                     <label for="insumo">Insumo:</label>
                     <select id="insumo" th:field="*{insumo.id}" required>
                         <option value="">Selecciona un Insumo</option>
-                        <option th:each="i : ${allInsumos}" th:value="${i.id}" th:text="${i.nombre}"></option>
+                        <option th:each="i : ${allInsumos}" th:value="${i.id}" th:text="${i.nombre + ' (' + i.tipo.name().replace('_', ' ') + ' - ' + #numbers.formatCurrency(i.precioUnitario) + '/' + i.unidadMedida + ')'}"></option>
                     </select>
                     <div th:if="${#fields.hasErrors('insumo')}" th:errors="*{insumo}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="cantidad">Cantidad:</label>
-                    <input type="number" id="cantidad" th:field="*{cantidad}" step="0.01" required>
+                    <label for="cantidad">Cantidad a Utilizar:</label>
+                    <input type="number" id="cantidad" th:field="*{cantidad}" step="0.001" min="0" required>
                     <div th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="unidadMedida">Unidad de Medida Usada:</label>
-                    <input type="text" id="unidadMedida" th:field="*{unidadMedida}">
-                    <div th:if="${#fields.hasErrors('unidadMedida')}" th:errors="*{unidadMedida}" class="error-message"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="observaciones">observaciones (Opcional):</label>
+                    <label for="observaciones">Observaciones:</label>
                     <textarea id="observaciones" th:field="*{observaciones}" rows="3"></textarea>
                     <div th:if="${#fields.hasErrors('observaciones')}" th:errors="*{observaciones}" class="error-message"></div>
                 </div>
 
-                <button type="submit" class="button">Guardar Insumo</button>
-                <a th:href="@{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" class="button cancel-button">Cancelar</a>
+                <div class="form-group" th:if="${insumoPlaneacion.id}">
+                    <label>Costo Total del Insumo:</label>
+                    <p th:text="${#numbers.formatCurrency(insumoPlaneacion.totalInsumo)}" class="readonly-field-display"></p>
+                </div>
+
+                <button type="submit" class="button">Guardar</button>
+                <a th:href="@{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" class="button cancel-button">Volver a Insumos de Planeación</a>
             </form>
         </section>
     </main>

@@ -1,32 +1,25 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.service;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo;
-import com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoCultivo;
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.EtapaCultivoRepository;
-import com.projectfinal.spring.agrosmart.agrosmart_application.repository.TipoCultivoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
 @Service
-@Transactional
 public class EtapaCultivoService {
 
     private final EtapaCultivoRepository etapaCultivoRepository;
-    private final TipoCultivoRepository tipoCultivoRepository; // Necesario para validar/obtener TipoCultivo
 
-    public EtapaCultivoService(EtapaCultivoRepository etapaCultivoRepository, TipoCultivoRepository tipoCultivoRepository) {
+    public EtapaCultivoService(EtapaCultivoRepository etapaCultivoRepository) {
         this.etapaCultivoRepository = etapaCultivoRepository;
-        this.tipoCultivoRepository = tipoCultivoRepository;
     }
 
+    @Transactional
     public EtapaCultivo saveEtapaCultivo(EtapaCultivo etapaCultivo) {
-        // Asegurarse de que el TipoCultivo asociado exista
-        TipoCultivo tipoCultivo = tipoCultivoRepository.findById(etapaCultivo.getTipoCultivo().getId())
-                .orElseThrow(() -> new RuntimeException("Tipo de Cultivo no encontrado."));
-        etapaCultivo.setTipoCultivo(tipoCultivo); // Asociar el objeto completo
-
         return etapaCultivoRepository.save(etapaCultivo);
     }
 
@@ -35,36 +28,32 @@ public class EtapaCultivoService {
         return etapaCultivoRepository.findById(id);
     }
 
+    // Método para obtener etapas por usuario (todas las que le pertenecen)
     @Transactional(readOnly = true)
-    public List<EtapaCultivo> getAllEtapasCultivo() {
-        return etapaCultivoRepository.findAll();
+    public List<EtapaCultivo> findByUsuario(Usuario usuario) {
+        return etapaCultivoRepository.findByUsuario(usuario);
     }
 
+    // Método seguro para obtener una etapa por ID y usuario
     @Transactional(readOnly = true)
-    public List<EtapaCultivo> getEtapasByTipoCultivoId(Long tipoCultivoId) {
-        return etapaCultivoRepository.findByTipoCultivoId(tipoCultivoId);
+    public Optional<EtapaCultivo> getEtapaCultivoByIdAndUsuario(Long id, Usuario usuario) {
+        return etapaCultivoRepository.findByIdAndUsuario(id, usuario);
     }
 
-    public EtapaCultivo updateEtapaCultivo(Long id, EtapaCultivo etapaCultivoDetails) {
-        EtapaCultivo etapaCultivo = etapaCultivoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Etapa de Cultivo no encontrada con ID: " + id));
+    @Transactional
+    public void deleteEtapaCultivo(Long id, Usuario currentUser) {
+        EtapaCultivo etapa = etapaCultivoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Etapa de cultivo no encontrada con ID: " + id));
 
-        etapaCultivo.setNombre(etapaCultivoDetails.getNombre());
-        etapaCultivo.setDescripcion(etapaCultivoDetails.getDescripcion());
-        etapaCultivo.setDuracionDias(etapaCultivoDetails.getDuracionDias());
-
-        // Si el tipo de cultivo cambia, actualizarlo
-        if (etapaCultivoDetails.getTipoCultivo() != null &&
-            !etapaCultivo.getTipoCultivo().getId().equals(etapaCultivoDetails.getTipoCultivo().getId())) {
-            TipoCultivo nuevoTipoCultivo = tipoCultivoRepository.findById(etapaCultivoDetails.getTipoCultivo().getId())
-                    .orElseThrow(() -> new RuntimeException("Nuevo Tipo de Cultivo para la etapa no encontrado."));
-            etapaCultivo.setTipoCultivo(nuevoTipoCultivo);
+        if (!etapa.getUsuario().getId().equals(currentUser.getId())) {
+            throw new SecurityException("No tiene permiso para eliminar esta etapa de cultivo.");
         }
-
-        return etapaCultivoRepository.save(etapaCultivo);
+        etapaCultivoRepository.deleteById(id);
     }
 
-    public void deleteEtapaCultivo(Long id) {
-        etapaCultivoRepository.deleteById(id);
+    // Método para encontrar una etapa por nombre y usuario
+    @Transactional(readOnly = true)
+    public Optional<EtapaCultivo> findByNombreAndUsuario(String nombre, Usuario usuario) {
+        return etapaCultivoRepository.findByNombreAndUsuario(nombre, usuario);
     }
 }

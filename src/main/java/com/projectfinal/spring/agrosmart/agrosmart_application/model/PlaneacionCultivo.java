@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
+import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -33,6 +34,14 @@ public class PlaneacionCultivo {
     @JoinColumn(name = "tipo_cultivo_id", nullable = false)
     private TipoCultivo tipoCultivo;
 
+    // ¡NUEVA RELACIÓN: Una Planeación de Cultivo tiene una Etapa de Cultivo!
+    @ManyToOne(fetch = FetchType.LAZY) // Lazy loading es bueno para ManyToOne
+    @JoinColumn(name = "etapa_cultivo_id", nullable = false) // Columna FK
+    private EtapaCultivo etapaCultivo; // Campo para la etapa
+
+    @Column(nullable = false) // Indica que el nombre no puede ser nulo
+    private String nombre;
+
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDate fechaInicio; // Mapea a DATE
 
@@ -58,14 +67,10 @@ public class PlaneacionCultivo {
     private LocalDateTime updatedAt;
 
     // Relaciones: Una PlaneacionCultivo tiene muchos SeguimientosEtapa, Siembras e InsumosPlaneacion
-    @OneToMany(mappedBy = "planeacion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<SeguimientoEtapa> seguimientosEtapa;
-
-    @OneToMany(mappedBy = "planeacion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<Siembra> siembras;
-
-    @OneToMany(mappedBy = "planeacion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<InsumoPlaneacion> insumosPlaneacion;
+    
+    @OneToMany(mappedBy = "planeacion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InsumoPlaneacion> insumosPlaneacion;
+    
 
     @PrePersist
     protected void onCreate() {

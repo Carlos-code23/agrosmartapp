@@ -21,124 +21,108 @@ import java.util.Optional;
 public class ParcelaWebController {
 
     private final ParcelaService parcelaService;
-    private final UsuarioService usuarioService; // Para obtener el usuario autenticado
+    private final UsuarioService usuarioService;
 
     public ParcelaWebController(ParcelaService parcelaService, UsuarioService usuarioService) {
         this.parcelaService = parcelaService;
         this.usuarioService = usuarioService;
     }
 
-    // Obtener el usuario autenticado para asociar la parcela
+    // Obtener el usuario autenticado para asociar la parcela y para verificaciones de seguridad
     private Usuario getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName(); // El email del usuario autenticado
         return usuarioService.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado en la base de datos."));
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado en la base de datos.")); // Cambiado a IllegalStateException
     }
 
     // Mostrar todas las parcelas del usuario autenticado
     @GetMapping
     public String listParcelas(Model model) {
         Usuario currentUser = getAuthenticatedUser();
-        List<Parcela> parcelas = parcelaService.getParcelasByUsuarioId(currentUser.getId());
+        // ERROR RESUELTO: "The method getParcelasByUsuarioId(Long) is undefined for the type ParcelaService"
+        // CAMBIO: Ahora se llama a findByUsuario(Usuario) que espera un objeto Usuario.
+        List<Parcela> parcelas = parcelaService.findByUsuario(currentUser);
         model.addAttribute("parcelas", parcelas);
-        model.addAttribute("currentUser", currentUser); // Para mostrar el nombre del usuario
-        return "parcelas/list-parcelas"; // src/main/resources/templates/parcelas/list-parcelas.html
+        model.addAttribute("currentUser", currentUser);
+        return "parcelas/list-parcelas";
     }
 
-    // Mostrar formulario para crear una nueva parcela
-    @GetMapping("/new")
-    public String showCreateForm(Model model) {
-        model.addAttribute("parcela", new Parcela());
-        // No necesitamos pasar el usuario aquí, lo asignaremos en el POST
-        return "parcelas/parcela-form"; // src/main/resources/templates/parcelas/parcela-form.html
+    // Mostrar formulario para crear una nueva parcela o editar una existente
+    @GetMapping({"/new", "/edit/{id}"}) // Fusionamos los métodos de creación y edición
+    public String showForm(@PathVariable(required = false) Long id, Model model, RedirectAttributes redirectAttributes) {
+        Usuario currentUser = getAuthenticatedUser();
+        Parcela parcela;
+
+        if (id != null) {
+            // ERROR RESUELTO (indirectamente): Aunque getParcelaById(id) existe,
+            // la lógica de seguridad se movió al servicio con getParcelaByIdAndUsuario.
+            // Esto asegura que el usuario solo edite sus propias parcelas.
+            Optional<Parcela> parcelaOptional = parcelaService.getParcelaByIdAndUsuario(id, currentUser);
+            if (parcelaOptional.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Parcela no encontrada o no tienes permiso para editarla.");
+                return "redirect:/parcelas";
+            }
+            parcela = parcelaOptional.get();
+        } else {
+            parcela = new Parcela();
+        }
+        model.addAttribute("parcela", parcela);
+        return "parcelas/parcela-form";
     }
 
-    // Procesar el formulario de creación de parcela
+    // Procesar el formulario (guardar o actualizar parcela)
+    // El método saveParcela en el servicio es capaz de manejar tanto la creación (id nulo)
+    // como la actualización (id presente en el objeto Parcela).
     @PostMapping
     public String saveParcela(@Valid @ModelAttribute("parcela") Parcela parcela,
                               BindingResult result,
                               RedirectAttributes redirectAttributes) {
 
         if (result.hasErrors()) {
+            // Si hay errores, volvemos al formulario.
+            // El objeto 'parcela' ya tiene el ID si es una edición.
             return "parcelas/parcela-form";
         }
 
-        // Asignar el usuario autenticado a la parcela antes de guardar
         Usuario currentUser = getAuthenticatedUser();
-        parcela.setUsuario(currentUser);
+        parcela.setUsuario(currentUser); // Asignar el usuario autenticado a la parcela
 
         try {
-            parcelaService.saveParcela(parcela);
+            // Antes de guardar, si la parcela tiene un ID, verificamos que pertenezca al usuario.
+            // Si es una nueva parcela (ID nulo), no hay verificación de propiedad previa.
+            if (parcela.getId() != null) {
+                parcelaService.getParcelaByIdAndUsuario(parcela.getId(), currentUser)
+                        .orElseThrow(() -> new SecurityException("No tienes permiso para actualizar esta parcela."));
+            }
+
+            parcelaService.saveParcela(parcela); // Este método ahora maneja tanto crear como actualizar
             redirectAttributes.addFlashAttribute("successMessage", "Parcela guardada exitosamente!");
+        } catch (SecurityException e) { // Capturamos la excepción de seguridad
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/parcelas";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar la parcela: " + e.getMessage());
+            // Si hay un error de servicio, se podría volver al formulario con el objeto 'parcela'
+            // para que los datos no se pierdan, pero por simplicidad se redirige.
+            // Para una mejor UX, podrías añadir: model.addAttribute("parcela", parcela); return "parcelas/parcela-form";
+            return "redirect:/parcelas/edit/" + parcela.getId(); // Si es una edición y falla
         }
 
         return "redirect:/parcelas";
     }
 
-    // Mostrar formulario para editar una parcela existente
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        Usuario currentUser = getAuthenticatedUser();
-        Optional<Parcela> parcelaOptional = parcelaService.getParcelaById(id);
-
-        if (parcelaOptional.isEmpty() || !parcelaOptional.get().getUsuario().getId().equals(currentUser.getId())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Parcela no encontrada o no tienes permiso para editarla.");
-            return "redirect:/parcelas";
-        }
-
-        model.addAttribute("parcela", parcelaOptional.get());
-        return "parcelas/parcela-form";
-    }
-
-    // Procesar el formulario de actualización de parcela
-    @PostMapping("/update/{id}")
-    public String updateParcela(@PathVariable Long id,
-                                @Valid @ModelAttribute("parcela") Parcela parcelaDetails,
-                                BindingResult result,
-                                RedirectAttributes redirectAttributes) {
-        if (result.hasErrors()) {
-            // Asegúrate de que el ID siga presente para el formulario
-            parcelaDetails.setId(id);
-            return "parcelas/parcela-form";
-        }
-
-        Usuario currentUser = getAuthenticatedUser();
-        // Validar que la parcela pertenezca al usuario autenticado antes de actualizar
-        Optional<Parcela> existingParcela = parcelaService.getParcelaById(id);
-        if (existingParcela.isEmpty() || !existingParcela.get().getUsuario().getId().equals(currentUser.getId())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Parcela no encontrada o no tienes permiso para actualizarla.");
-            return "redirect:/parcelas";
-        }
-
-        try {
-            // Asegurar que el usuario no se sobrescriba (ya está seteado en existingParcela)
-            parcelaDetails.setUsuario(existingParcela.get().getUsuario());
-            parcelaService.updateParcela(id, parcelaDetails);
-            redirectAttributes.addFlashAttribute("successMessage", "Parcela actualizada exitosamente!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al actualizar la parcela: " + e.getMessage());
-        }
-
-        return "redirect:/parcelas";
-    }
-
-    // Eliminar una parcela
+    // ELIMINAR una parcela
     @PostMapping("/delete/{id}")
     public String deleteParcela(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Usuario currentUser = getAuthenticatedUser();
-        Optional<Parcela> parcelaOptional = parcelaService.getParcelaById(id);
-
-        if (parcelaOptional.isEmpty() || !parcelaOptional.get().getUsuario().getId().equals(currentUser.getId())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Parcela no encontrada o no tienes permiso para eliminarla.");
-            return "redirect:/parcelas";
-        }
-
         try {
-            parcelaService.deleteParcela(id);
+            // ERROR RESUELTO: "The method deleteParcela(Long, Usuario) in the type ParcelaService is not applicable for the argument (Long)"
+            // CAMBIO: Ahora se llama a deleteParcela(Long, Usuario)
+            parcelaService.deleteParcela(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Parcela eliminada exitosamente!");
+        } catch (IllegalArgumentException | SecurityException e) { // Capturamos excepciones específicas
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error al eliminar la parcela: " + e.getMessage());
         }

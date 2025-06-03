@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${insumo.id} ? 'Editar Insumo - AgroSmart' : 'Crear Insumo - AgroSmart'"></title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        // Función JavaScript para mostrar/ocultar el campo de texto "Otra Unidad de Medida"
+        document.addEventListener('DOMContentLoaded', function() {
+            const unidadMedidaSelect = document.getElementById('unidadMedidaSelect');
+            const unidadMedidaCustomDiv = document.getElementById('unidadMedidaCustomDiv');
+            const unidadMedidaCustomInput = document.getElementById('unidadMedidaCustom');
+
+            function toggleCustomUnitField() {
+                if (unidadMedidaSelect.value === 'OTRO') {
+                    unidadMedidaCustomDiv.style.display = 'block';
+                    unidadMedidaCustomInput.setAttribute('required', 'required');
+                } else {
+                    unidadMedidaCustomDiv.style.display = 'none';
+                    unidadMedidaCustomInput.removeAttribute('required');
+                    unidadMedidaCustomInput.value = ''; // Limpiar el valor si se oculta
+                }
+            }
+
+            // Llamar al cargar la página para establecer el estado inicial
+            toggleCustomUnitField();
+
+            // Añadir el listener para cuando el select cambie
+            unidadMedidaSelect.addEventListener('change', toggleCustomUnitField);
+        });
+    </script>
 </head>
 <body>
     <header>
@@ -16,6 +41,7 @@
                 <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
                 <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
                 <li><a th:href="@{/insumos}" class="active">Insumos</a></li>
+                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
                 <li>
                     <form th:action="@{/logout}" method="post" style="display:inline;">
                         <button type="submit" class="logout-button">Cerrar Sesión</button>
@@ -29,42 +55,58 @@
         <section class="auth-form-container">
             <h2 th:text="${insumo.id} ? 'Editar Insumo' : 'Crear Nuevo Insumo'"></h2>
 
-            <form th:action="${insumo.id} ? @{/insumos/update/{id}(id=${insumo.id})} : @{/insumos}" th:object="${insumo}" method="post" class="auth-form">
-
+            <form th:action="@{/insumos}" th:object="${insumo}" method="post" class="auth-form">
                 <input type="hidden" th:field="*{id}" th:if="${insumo.id}" />
 
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
-                    <input type="text" id="nombre" th:field="*{nombre}" required>
+                    <input type="text" id="nombre" th:field="*{nombre}" required />
                     <div th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="tipo">Tipo:</label>
-                    <input type="text" id="tipo" th:field="*{tipo}">
+                    <label for="tipo">Tipo de Insumo:</label>
+                    <select id="tipo" th:field="*{tipo}" required>
+                        <option value="">Seleccione un tipo</option>
+                        <option th:each="tipo : ${T(com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoInsumo).values()}"
+                                th:value="${tipo}" th:text="${tipo.name().replace('_', ' ')}">Tipo</option>
+                    </select>
                     <div th:if="${#fields.hasErrors('tipo')}" th:errors="*{tipo}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="proveedor">Proveedor:</label>
-                    <input type="text" id="proveedor" th:field="*{proveedor}">
+                    <input type="text" id="proveedor" th:field="*{proveedor}" />
                     <div th:if="${#fields.hasErrors('proveedor')}" th:errors="*{proveedor}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="unidadMedida">Unidad de Medida:</label>
-                    <input type="text" id="unidadMedida" th:field="*{unidadMedida}">
+                    <label for="unidadMedidaSelect">Unidad de Medida:</label>
+                    <select id="unidadMedidaSelect" name="unidadMedidaSelect" required>
+                        <option value="">Seleccione una unidad</option>
+                        <option th:each="unidad : ${unidadesMedida}"
+                                th:value="${unidad.name()}"
+                                th:text="${unidad.descripcion}"
+                                th:selected="${insumo.unidadMedida != null and insumo.unidadMedida == unidad.descripcion}">
+                        </option>
+                        <option value="OTRO" th:selected="${!#lists.contains(unidadesMedida.![descripcion], insumo.unidadMedida)}">Otro (especificar)</option>
+                    </select>
                     <div th:if="${#fields.hasErrors('unidadMedida')}" th:errors="*{unidadMedida}" class="error-message"></div>
+                </div>
+
+                <div class="form-group" id="unidadMedidaCustomDiv" style="display:none;">
+                    <label for="unidadMedidaCustom">Especifique Otra Unidad:</label>
+                    <input type="text" id="unidadMedidaCustom" name="unidadMedidaCustom" th:value="${!#lists.contains(unidadesMedida.![descripcion], insumo.unidadMedida) ? insumo.unidadMedida : ''}" />
                 </div>
 
                 <div class="form-group">
                     <label for="precioUnitario">Precio Unitario:</label>
-                    <input type="number" id="precioUnitario" th:field="*{precioUnitario}" step="0.01">
+                    <input type="number" id="precioUnitario" th:field="*{precioUnitario}" step="0.01" min="0" required />
                     <div th:if="${#fields.hasErrors('precioUnitario')}" th:errors="*{precioUnitario}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="descripcion">Descripción (Opcional):</label>
+                    <label for="descripcion">Descripción:</label>
                     <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
                     <div th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="error-message"></div>
                 </div>

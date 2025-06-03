@@ -1,6 +1,8 @@
+// src/main/java/com/projectfinal/spring/agrosmart/agrosmart_application/service/ParcelaService.java
 package com.projectfinal.spring.agrosmart.agrosmart_application.service;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Parcela;
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario; // ¡Importa Usuario!
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.ParcelaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,43 +14,20 @@ import java.util.Optional;
 public class ParcelaService {
 
     private final ParcelaRepository parcelaRepository;
-    // Podrías inyectar UsuarioRepository si necesitas validar que el usuario exista
-    // private final UsuarioRepository usuarioRepository;
 
     public ParcelaService(ParcelaRepository parcelaRepository) {
         this.parcelaRepository = parcelaRepository;
-        // this.usuarioRepository = usuarioRepository;
     }
 
-    /**
-     * Guarda una nueva parcela en la base de datos.
-     * @param parcela El objeto Parcela a guardar.
-     * @return La parcela guardada.
-     */
     public Parcela saveParcela(Parcela parcela) {
-        // Aquí podrías añadir validaciones de negocio, por ejemplo:
-        // - Que el usuario asociado a la parcela exista.
-        // if (parcela.getUsuario() != null && parcela.getUsuario().getId() != null) {
-        //     usuarioRepository.findById(parcela.getUsuario().getId())
-        //             .orElseThrow(() -> new RuntimeException("Usuario asociado a la parcela no encontrado."));
-        // }
         return parcelaRepository.save(parcela);
     }
 
-    /**
-     * Obtiene una parcela por su ID.
-     * @param id El ID de la parcela.
-     * @return Un Optional que contiene la parcela si se encuentra, o vacío si no.
-     */
     @Transactional(readOnly = true)
     public Optional<Parcela> getParcelaById(Long id) {
         return parcelaRepository.findById(id);
     }
 
-    /**
-     * Obtiene todas las parcelas.
-     * @return Una lista de todas las parcelas.
-     */
     @Transactional(readOnly = true)
     public List<Parcela> getAllParcelas() {
         return parcelaRepository.findAll();
@@ -56,23 +35,29 @@ public class ParcelaService {
 
     /**
      * Obtiene las parcelas de un usuario específico.
-     * @param usuarioId El ID del usuario.
+     * @param usuario El objeto Usuario.
      * @return Una lista de parcelas del usuario.
      */
     @Transactional(readOnly = true)
-    public List<Parcela> getParcelasByUsuarioId(Long usuarioId) {
-        return parcelaRepository.findByUsuarioId(usuarioId);
+    public List<Parcela> findByUsuario(Usuario usuario) { // ¡Cambiado! Ahora recibe un objeto Usuario
+        return parcelaRepository.findByUsuario(usuario);
     }
 
-
     /**
-     * Actualiza una parcela existente.
-     * @param id El ID de la parcela a actualizar.
-     * @param parcelaDetails Los detalles actualizados de la parcela.
-     * @return La parcela actualizada.
-     * @throws RuntimeException si la parcela no es encontrada.
+     * Obtiene una parcela por su ID y el usuario al que pertenece.
+     * Es crucial para la seguridad, asegurando que un usuario solo acceda a sus parcelas.
+     * @param id El ID de la parcela.
+     * @param usuario El usuario al que debe pertenecer la parcela.
+     * @return Un Optional que contiene la parcela si se encuentra y pertenece al usuario, o vacío si no.
      */
+    @Transactional(readOnly = true)
+    public Optional<Parcela> getParcelaByIdAndUsuario(Long id, Usuario usuario) {
+        return parcelaRepository.findByIdAndUsuario(id, usuario);
+    }
+
     public Parcela updateParcela(Long id, Parcela parcelaDetails) {
+        // En una refactorización previa, sugerí consolidar save/update.
+        // Si mantienes un update separado, asegúrate de que el usuario se setee.
         Parcela parcela = parcelaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Parcela no encontrada con ID: " + id));
 
@@ -81,16 +66,25 @@ public class ParcelaService {
         parcela.setTamano(parcelaDetails.getTamano());
         parcela.setUnidadMedida(parcelaDetails.getUnidadMedida());
         parcela.setDescripcion(parcelaDetails.getDescripcion());
-        // No actualizamos usuario_id directamente aquí, si quieres cambiar el dueño, sería otro método.
+        // El usuario ya debería estar seteado en 'parcela' y no debería cambiarse aquí.
 
         return parcelaRepository.save(parcela);
     }
 
     /**
-     * Elimina una parcela por su ID.
+     * Elimina una parcela por su ID, verificando que pertenece al usuario.
      * @param id El ID de la parcela a eliminar.
+     * @param currentUser El usuario que intenta eliminar la parcela.
+     * @throws IllegalArgumentException si la parcela no es encontrada.
+     * @throws SecurityException si el usuario no tiene permiso para eliminar la parcela.
      */
-    public void deleteParcela(Long id) {
+    public void deleteParcela(Long id, Usuario currentUser) {
+        Parcela parcela = parcelaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Parcela no encontrada con ID: " + id));
+
+        if (!parcela.getUsuario().getId().equals(currentUser.getId())) {
+            throw new SecurityException("No tiene permiso para eliminar esta parcela.");
+        }
         parcelaRepository.deleteById(id);
     }
 }

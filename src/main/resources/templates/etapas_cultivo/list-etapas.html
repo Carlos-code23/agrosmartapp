@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Etapas de Cultivo - AgroSmart</title>
+    <title>Mis Etapas de Cultivo - AgroSmart</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -28,30 +28,28 @@
 
     <main>
         <section class="crud-section">
-            <h2>Gestión de Etapas de Cultivo</h2>
+            <h2>Mis Etapas de Cultivo</h2>
 
             <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
             <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
 
             <a th:href="@{/etapas/new}" class="button">Crear Nueva Etapa</a>
 
-            <div th:if="${#lists.isEmpty(etapasCultivo)}" class="no-data-message">
-                <p>No hay etapas de cultivo registradas aún.</p>
+            <div th:if="${#lists.isEmpty(etapas)}" class="no-data-message">
+                <p>No tienes etapas de cultivo registradas.</p>
             </div>
 
-            <table th:unless="${#lists.isEmpty(etapasCultivo)}" class="data-table">
+            <table th:unless="${#lists.isEmpty(etapas)}" class="data-table">
                 <thead>
                     <tr>
-                        <th>Tipo de Cultivo</th>
-                        <th>Nombre de Etapa</th>
+                        <th>Nombre</th>
                         <th>Descripción</th>
-                        <th>Duración Est. (días)</th>
+                        <th>Duración Estimada (días)</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="etapa : ${etapasCultivo}">
-                        <td th:text="${etapa.tipoCultivo?.nombre}"></td>
+                    <tr th:each="etapa : ${etapas}">
                         <td th:text="${etapa.nombre}"></td>
                         <td th:text="${etapa.descripcion}"></td>
                         <td th:text="${etapa.duracionDias}"></td>

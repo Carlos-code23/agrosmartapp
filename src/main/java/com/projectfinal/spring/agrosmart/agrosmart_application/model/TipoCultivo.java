@@ -45,6 +45,6 @@ public class TipoCultivo {
     @OneToMany(mappedBy = "tipoCultivo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PlaneacionCultivo> planeacionesCultivo;
 
-    @OneToMany(mappedBy = "tipoCultivo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<EtapaCultivo> etapasCultivo;
+    //@OneToMany(mappedBy = "tipoCultivo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    //private List<EtapaCultivo> etapasCultivo;
 }

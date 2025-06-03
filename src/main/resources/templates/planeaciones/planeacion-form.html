@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${planeacion.id} ? 'Editar Planeación - AgroSmart' : 'Crear Planeación - AgroSmart'"></title>
+    <title th:text="${planeacionCultivo.id} ? 'Editar Planeación - AgroSmart' : 'Crear Planeación - AgroSmart'"></title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -16,7 +16,7 @@
                 <li><a th:href="@{/planeaciones}" class="active">Mis Planeaciones</a></li>
                 <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
                 <li><a th:href="@{/insumos}">Insumos</a></li>
-                <li>
+                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li> <li>
                     <form th:action="@{/logout}" method="post" style="display:inline;">
                         <button type="submit" class="logout-button">Cerrar Sesión</button>
                     </form>
@@ -27,19 +27,21 @@
 
     <main>
         <section class="auth-form-container">
-            <h2 th:text="${planeacion.id} ? 'Editar Planeación de Cultivo' : 'Crear Nueva Planeación de Cultivo'"></h2>
+            <h2 th:text="${planeacionCultivo.id} ? 'Editar Planeación de Cultivo' : 'Crear Nueva Planeación de Cultivo'"></h2>
 
-            <form th:action="${planeacion.id} ? @{/planeaciones/update/{id}(id=${planeacion.id})} : @{/planeaciones}" th:object="${planeacion}" method="post" class="auth-form">
+            <form th:action="@{/planeaciones}" th:object="${planeacionCultivo}" method="post" class="auth-form">
+                <input type="hidden" th:field="*{id}" th:if="${planeacionCultivo.id}" />
 
-                <input type="hidden" th:field="*{id}" th:if="${planeacion.id}" />
-                <input type="hidden" th:field="*{usuario.id}" th:if="${planeacion.usuario != null}" />
-                <input type="hidden" th:field="*{numeroSemillas}" th:if="${planeacion.id}" />
-
+                <div class="form-group">
+                    <label for="nombre">Nombre de la Planeación:</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required />
+                    <div th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="error-message"></div>
+                </div>
 
                 <div class="form-group">
                     <label for="parcela">Parcela:</label>
                     <select id="parcela" th:field="*{parcela.id}" required>
-                        <option value="">Selecciona una Parcela</option>
+                        <option value="">Seleccione una parcela</option>
                         <option th:each="p : ${parcelas}" th:value="${p.id}" th:text="${p.nombre}"></option>
                     </select>
                     <div th:if="${#fields.hasErrors('parcela')}" th:errors="*{parcela}" class="error-message"></div>
@@ -48,43 +50,49 @@
                 <div class="form-group">
                     <label for="tipoCultivo">Tipo de Cultivo:</label>
                     <select id="tipoCultivo" th:field="*{tipoCultivo.id}" required>
-                        <option value="">Selecciona un Tipo de Cultivo</option>
+                        <option value="">Seleccione un tipo de cultivo</option>
                         <option th:each="tc : ${tiposCultivo}" th:value="${tc.id}" th:text="${tc.nombre}"></option>
                     </select>
                     <div th:if="${#fields.hasErrors('tipoCultivo')}" th:errors="*{tipoCultivo}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
+                    <label for="etapaCultivo">Etapa Inicial del Cultivo:</label>
+                    <select id="etapaCultivo" th:field="*{etapaCultivo.id}" required>
+                        <option value="">Seleccione una etapa</option>
+                        <option th:each="etapa : ${etapasCultivo}" th:value="${etapa.id}" th:text="${etapa.nombre}"></option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('etapaCultivo')}" th:errors="*{etapaCultivo}" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
                     <label for="fechaInicio">Fecha de Inicio:</label>
-                    <input type="date" id="fechaInicio" th:field="*{fechaInicio}" required>
+                    <input type="date" id="fechaInicio" th:field="*{fechaInicio}" required />
                     <div th:if="${#fields.hasErrors('fechaInicio')}" th:errors="*{fechaInicio}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="fechaFinEstimada">Fecha Fin Estimada:</label>
-                    <input type="date" id="fechaFinEstimada" th:field="*{fechaFinEstimada}">
+                    <input type="date" id="fechaFinEstimada" th:field="*{fechaFinEstimada}" />
                     <div th:if="${#fields.hasErrors('fechaFinEstimada')}" th:errors="*{fechaFinEstimada}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="estimacionCosto">Costo Estimado:</label>
-                    <input type="number" id="estimacionCosto" th:field="*{estimacionCosto}" step="0.01">
-                    <div th:if="${#fields.hasErrors('estimacionCosto')}" th:errors="*{estimacionCosto}" class="error-message"></div>
+                    <label for="numeroSemillas">Número de Semillas (aprox.):</label>
+                    <input type="number" id="numeroSemillas" th:field="*{numeroSemillas}" min="0" step="0.01" />
+                    <div th:if="${#fields.hasErrors('numeroSemillas')}" th:errors="*{numeroSemillas}" class="error-message"></div>
                 </div>
+
+                <input type="hidden" th:field="*{estimacionCosto}" />
 
                 <div class="form-group">
                     <label for="estado">Estado:</label>
-                    <select id="estado" th:field="*{estado}" required>
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="En Curso">En Curso</option>
-                        <option value="Completada">Completada</option>
-                        <option value="Cancelada">Cancelada</option>
-                    </select>
+                    <input type="text" id="estado" th:field="*{estado}" />
                     <div th:if="${#fields.hasErrors('estado')}" th:errors="*{estado}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="descripcion">Descripción (Opcional):</label>
+                    <label for="descripcion">Descripción:</label>
                     <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
                     <div th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="error-message"></div>
                 </div>

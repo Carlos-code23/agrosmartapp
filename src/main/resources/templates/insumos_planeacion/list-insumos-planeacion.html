@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${'Insumos para Planeación: ' + planeacion.nombre + ' - AgroSmart'}"></title>
+    <title th:text="'Insumos para ' + ${planeacion.nombre} + ' - AgroSmart'"></title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -28,18 +28,18 @@
 
     <main>
         <section class="crud-section">
-            <h2 th:text="${'Insumos para Planeación: ' + planeacion.nombre}"></h2>
-            <p><strong>Parcela:</strong> <span th:text="${planeacion.parcela?.nombre}"></span></p>
-            <p><strong>Tipo de Cultivo:</strong> <span th:text="${planeacion.tipoCultivo?.nombre}"></span></p>
+            <h2 th:text="'Insumos para la Planeación: ' + ${planeacion.nombre}"></h2>
 
             <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
             <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
 
-            <a th:href="@{/planeaciones/{planeacionId}/insumos/new(planeacionId=${planeacion.id})}" class="button">Añadir Insumo a esta Planeación</a>
+            <p class="summary-info">Costo Estimado Total de la Planeación: <strong th:text="${#numbers.formatCurrency(estimacionCostoPlaneacion)}"></strong></p>
+
+            <a th:href="@{/planeaciones/{planeacionId}/insumos/new(planeacionId=${planeacion.id})}" class="button">Asignar Nuevo Insumo</a>
             <a th:href="@{/planeaciones}" class="button cancel-button">Volver a Planeaciones</a>
 
             <div th:if="${#lists.isEmpty(insumosPlaneacion)}" class="no-data-message">
-                <p>No hay insumos registrados para esta planeación aún.</p>
+                <p>No hay insumos asignados a esta planeación aún.</p>
             </div>
 
             <table th:unless="${#lists.isEmpty(insumosPlaneacion)}" class="data-table">
@@ -47,16 +47,22 @@
                     <tr>
                         <th>Insumo</th>
                         <th>Cantidad</th>
-                        <th>Unidad</th>
-                        <th>Notas</th>
+                        <th>Unidad Medida</th>
+                        <th>Precio Unitario</th>
+                        <th>Total Insumo</th>
+                        <th>Fecha Registro</th>
+                        <th>Observaciones</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr th:each="ip : ${insumosPlaneacion}">
-                        <td th:text="${ip.insumo?.nombre}"></td>
-                        <td th:text="${ip.cantidad}"></td>
-                        <td th:text="${ip.insumo?unidadMedida}"></td>
+                        <td th:text="${ip.insumo.nombre}"></td>
+                        <td th:text="${#numbers.formatDecimal(ip.cantidad, 1, 3)}"></td>
+                        <td th:text="${ip.insumo.unidadMedida}"></td>
+                        <td th:text="${#numbers.formatCurrency(ip.insumo.precioUnitario)}"></td>
+                        <td th:text="${#numbers.formatCurrency(ip.totalInsumo)}"></td>
+                        <td th:text="${#temporals.format(ip.fechaRegistro, 'dd-MM-yyyy')}"></td>
                         <td th:text="${ip.observaciones}"></td>
                         <td>
                             <a th:href="@{/planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${ip.id})}" class="button-small edit-button">Editar</a>

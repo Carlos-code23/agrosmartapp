@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Planeaciones de Cultivo - AgroSmart</title>
+    <title>Mis Planeaciones - AgroSmart</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -16,6 +16,7 @@
                 <li><a th:href="@{/planeaciones}" class="active">Mis Planeaciones</a></li>
                 <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
                 <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
                 <li>
                     <form th:action="@{/logout}" method="post" style="display:inline;">
                         <button type="submit" class="logout-button">Cerrar Sesión</button>
@@ -27,7 +28,7 @@
 
     <main>
         <section class="crud-section">
-            <h2>Mis Planeaciones de Cultivo</h2>
+            <h2>Mis Planeaciones</h2>
 
             <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
             <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
@@ -35,26 +36,28 @@
             <a th:href="@{/planeaciones/new}" class="button">Crear Nueva Planeación</a>
 
             <div th:if="${#lists.isEmpty(planeaciones)}" class="no-data-message">
-                <p>No tienes planeaciones de cultivo registradas aún.</p>
+                <p>No hay planeaciones de cultivo registradas aún.</p>
             </div>
 
             <table th:unless="${#lists.isEmpty(planeaciones)}" class="data-table">
                 <thead>
                     <tr>
+                        <th>Nombre</th>
                         <th>Parcela</th>
-                        <th>Tipo Cultivo</th>
-                        <th>Fecha Inicio</th>
-                        <th>Fecha Fin Est.</th>
-                        <th># Semillas (Estimado)</th>
-                        <th>Costo Estimado</th>
+                        <th>Tipo de Cultivo</th>
+                        <th>Inicio</th>
+                        <th>Fin Estimado</th>
+                        <th>Semillas Est.</th>
+                        <th>Costo Est.</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr th:each="planeacion : ${planeaciones}">
-                        <td th:text="${planeacion.parcela?.nombre}"></td>
-                        <td th:text="${planeacion.tipoCultivo?.nombre}"></td>
+                        <td th:text="${planeacion.nombre}"></td>
+                        <td th:text="${planeacion.parcela.nombre}"></td>
+                        <td th:text="${planeacion.tipoCultivo.nombre}"></td>
                         <td th:text="${planeacion.fechaInicio}"></td>
                         <td th:text="${planeacion.fechaFinEstimada}"></td>
                         <td th:text="${planeacion.numeroSemillas}"></td>
@@ -62,6 +65,7 @@
                         <td th:text="${planeacion.estado}"></td>
                         <td>
                             <a th:href="@{/planeaciones/edit/{id}(id=${planeacion.id})}" class="button-small edit-button">Editar</a>
+                            <a th:href="@{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" class="button-small">Ver Insumos</a>
                             <form th:action="@{/planeaciones/delete/{id}(id=${planeacion.id})}" method="post" style="display:inline-block;">
                                 <button type="submit" class="button-small delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar esta planeación?');">Eliminar</button>
                             </form>

@@ -1,11 +1,12 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.controller;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo;
-import com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoCultivo;
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.EtapaCultivoService;
-import com.projectfinal.spring.agrosmart.agrosmart_application.service.TipoCultivoService;
-
+import com.projectfinal.spring.agrosmart.agrosmart_application.service.UsuarioService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -16,128 +17,82 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/etapas")
+@RequestMapping("/etapas") // Mapeo para el CRUD de Etapas de Cultivo
 public class EtapaCultivoWebController {
 
     private final EtapaCultivoService etapaCultivoService;
-    private final TipoCultivoService tipoCultivoService; // Para el dropdown de TipoCultivo
+    private final UsuarioService usuarioService;
 
-    public EtapaCultivoWebController(EtapaCultivoService etapaCultivoService, TipoCultivoService tipoCultivoService) {
+    public EtapaCultivoWebController(EtapaCultivoService etapaCultivoService, UsuarioService usuarioService) {
         this.etapaCultivoService = etapaCultivoService;
-        this.tipoCultivoService = tipoCultivoService;
+        this.usuarioService = usuarioService;
     }
 
-    // Mostrar todas las etapas de cultivo
+    private Usuario getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+        return usuarioService.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado en la base de datos."));
+    }
+
+    // --- LISTAR ETAPAS DE CULTIVO DEL USUARIO ---
     @GetMapping
-    public String listEtapasCultivo(Model model) {
-        List<EtapaCultivo> etapasCultivo = etapaCultivoService.getAllEtapasCultivo();
-        model.addAttribute("etapasCultivo", etapasCultivo);
-        return "etapas/list-etapas"; // src/main/resources/templates/etapas/list-etapas.html
+    public String listEtapas(Model model) {
+        Usuario currentUser = getAuthenticatedUser();
+        List<EtapaCultivo> etapas = etapaCultivoService.findByUsuario(currentUser);
+        model.addAttribute("etapas", etapas);
+        return "etapas_cultivo/list-etapas"; // Vista para listar etapas
     }
 
-    // Mostrar formulario para crear una nueva etapa
-    @GetMapping("/new")
-    public String showCreateForm(Model model) {
-        model.addAttribute("etapaCultivo", new EtapaCultivo());
-        model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo()); // Pasa los tipos de cultivo
-        return "etapas/etapa-form"; // src/main/resources/templates/etapas/etapa-form.html
-    }
-
-    // Procesar el formulario de creación de etapa
-    @PostMapping
-    public String saveEtapaCultivo(@Valid @ModelAttribute("etapaCultivo") EtapaCultivo etapaCultivo,
-                                   BindingResult result,
-                                   Model model, // Necesario para recargar el dropdown en caso de error
-                                   RedirectAttributes redirectAttributes) {
-
-        // Validar que el tipoCultivo no sea nulo si viene de un select
-        if (etapaCultivo.getTipoCultivo() == null || etapaCultivo.getTipoCultivo().getId() == null) {
-            result.rejectValue("tipoCultivo", "null.tipoCultivo", "Debe seleccionar un tipo de cultivo.");
+    // --- MOSTRAR FORMULARIO DE CREACIÓN/EDICIÓN DE ETAPA ---
+    @GetMapping({"/new", "/edit/{id}"})
+    public String showForm(@PathVariable(required = false) Long id, Model model, RedirectAttributes redirectAttributes) {
+        Usuario currentUser = getAuthenticatedUser();
+        if (id != null) {
+            Optional<EtapaCultivo> etapaOptional = etapaCultivoService.getEtapaCultivoByIdAndUsuario(id, currentUser);
+            if (etapaOptional.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Etapa de cultivo no encontrada o no autorizada.");
+                return "redirect:/etapas";
+            }
+            model.addAttribute("etapaCultivo", etapaOptional.get());
+        } else {
+            model.addAttribute("etapaCultivo", new EtapaCultivo());
         }
+        return "etapas_cultivo/etapa-form"; // Vista del formulario
+    }
+
+    // --- PROCESAR FORMULARIO (GUARDAR/ACTUALIZAR ETAPA) ---
+    @PostMapping
+    public String saveEtapa(@Valid @ModelAttribute("etapaCultivo") EtapaCultivo etapaCultivo,
+                            BindingResult result,
+                            RedirectAttributes redirectAttributes,
+                            Model model) {
+        Usuario currentUser = getAuthenticatedUser();
+        etapaCultivo.setUsuario(currentUser); // Asegura que la etapa se asocie al usuario actual
 
         if (result.hasErrors()) {
-            model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
-            return "etapas/etapa-form";
+            return "etapas_cultivo/etapa-form";
         }
-        try {
-            // Asegúrate de que el objeto TipoCultivo esté completamente cargado si solo viene con ID
-            if (etapaCultivo.getTipoCultivo() != null && etapaCultivo.getTipoCultivo().getId() != null) {
-                Optional<TipoCultivo> tc = tipoCultivoService.getTipoCultivoById(etapaCultivo.getTipoCultivo().getId());
-                if (tc.isPresent()) {
-                    etapaCultivo.setTipoCultivo(tc.get());
-                } else {
-                    result.rejectValue("tipoCultivo", "notFound.tipoCultivo", "El tipo de cultivo seleccionado no es válido.");
-                    model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
-                    return "etapas/etapa-form";
-                }
-            }
 
+        try {
             etapaCultivoService.saveEtapaCultivo(etapaCultivo);
             redirectAttributes.addFlashAttribute("successMessage", "Etapa de cultivo guardada exitosamente!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error al guardar la etapa de cultivo: " + e.getMessage());
+            return "etapas_cultivo/etapa-form";
         }
         return "redirect:/etapas";
     }
 
-    // Mostrar formulario para editar una etapa existente
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        Optional<EtapaCultivo> etapaCultivoOptional = etapaCultivoService.getEtapaCultivoById(id);
-        if (etapaCultivoOptional.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Etapa de cultivo no encontrada.");
-            return "redirect:/etapas";
-        }
-        model.addAttribute("etapaCultivo", etapaCultivoOptional.get());
-        model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo()); // Pasa los tipos de cultivo
-        return "etapas/etapa-form";
-    }
-
-    // Procesar el formulario de actualización de etapa
-    @PostMapping("/update/{id}")
-    public String updateEtapaCultivo(@PathVariable Long id,
-                                     @Valid @ModelAttribute("etapaCultivo") EtapaCultivo etapaCultivoDetails,
-                                     BindingResult result,
-                                     Model model, // Necesario para recargar el dropdown en caso de error
-                                     RedirectAttributes redirectAttributes) {
-
-        if (etapaCultivoDetails.getTipoCultivo() == null || etapaCultivoDetails.getTipoCultivo().getId() == null) {
-            result.rejectValue("tipoCultivo", "null.tipoCultivo", "Debe seleccionar un tipo de cultivo.");
-        }
-
-        if (result.hasErrors()) {
-            model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
-            etapaCultivoDetails.setId(id); // Asegura que el ID se mantenga
-            return "etapas/etapa-form";
-        }
-
-        try {
-            // Asegúrate de que el objeto TipoCultivo esté completamente cargado
-            if (etapaCultivoDetails.getTipoCultivo() != null && etapaCultivoDetails.getTipoCultivo().getId() != null) {
-                Optional<TipoCultivo> tc = tipoCultivoService.getTipoCultivoById(etapaCultivoDetails.getTipoCultivo().getId());
-                if (tc.isPresent()) {
-                    etapaCultivoDetails.setTipoCultivo(tc.get());
-                } else {
-                    result.rejectValue("tipoCultivo", "notFound.tipoCultivo", "El tipo de cultivo seleccionado no es válido.");
-                    model.addAttribute("tiposCultivo", tipoCultivoService.getAllTiposCultivo());
-                    etapaCultivoDetails.setId(id);
-                    return "etapas/etapa-form";
-                }
-            }
-            etapaCultivoService.updateEtapaCultivo(id, etapaCultivoDetails);
-            redirectAttributes.addFlashAttribute("successMessage", "Etapa de cultivo actualizada exitosamente!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al actualizar la etapa de cultivo: " + e.getMessage());
-        }
-        return "redirect:/etapas";
-    }
-
-    // Eliminar una etapa de cultivo
+    // --- ELIMINAR ETAPA DE CULTIVO ---
     @PostMapping("/delete/{id}")
-    public String deleteEtapaCultivo(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String deleteEtapa(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        Usuario currentUser = getAuthenticatedUser();
         try {
-            etapaCultivoService.deleteEtapaCultivo(id);
+            etapaCultivoService.deleteEtapaCultivo(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Etapa de cultivo eliminada exitosamente!");
+        } catch (IllegalArgumentException | SecurityException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error al eliminar la etapa de cultivo: " + e.getMessage());
         }

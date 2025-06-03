@@ -14,7 +14,7 @@ import java.util.Collections; // Para roles, si no tienes roles definidos aún
 @Service // Marca esta clase como un servicio de Spring
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository; 
 
     public CustomUserDetailsService(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;

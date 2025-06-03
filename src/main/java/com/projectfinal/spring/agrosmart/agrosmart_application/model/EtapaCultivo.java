@@ -19,8 +19,8 @@ public class EtapaCultivo {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tipo_cultivo_id", nullable = false)
-    private TipoCultivo tipoCultivo;
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
 
     @Column(nullable = false, length = 100)
     private String nombre;
@@ -31,7 +31,12 @@ public class EtapaCultivo {
     @Column(name = "duracion_dias")
     private Integer duracionDias;
 
-    // Relaciones: Una EtapaCultivo puede estar en muchos SeguimientosEtapa
-    @OneToMany(mappedBy = "etapa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<SeguimientoEtapa> seguimientosEtapa;
+    // Constructor para las etapas predefinidas, sin ID inicial
+    public EtapaCultivo(String nombre, String descripcion, Integer duracionDias, Usuario usuario) {
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.duracionDias = duracionDias;
+        this.usuario = usuario;
+    }
+
 }

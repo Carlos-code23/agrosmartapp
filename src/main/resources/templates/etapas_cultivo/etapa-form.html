@@ -30,34 +30,24 @@
         <section class="auth-form-container">
             <h2 th:text="${etapaCultivo.id} ? 'Editar Etapa de Cultivo' : 'Crear Nueva Etapa de Cultivo'"></h2>
 
-            <form th:action="${etapaCultivo.id} ? @{/etapas/update/{id}(id=${etapaCultivo.id})} : @{/etapas}" th:object="${etapaCultivo}" method="post" class="auth-form">
-
+            <form th:action="@{/etapas}" th:object="${etapaCultivo}" method="post" class="auth-form">
                 <input type="hidden" th:field="*{id}" th:if="${etapaCultivo.id}" />
 
                 <div class="form-group">
-                    <label for="tipoCultivo">Tipo de Cultivo:</label>
-                    <select id="tipoCultivo" th:field="*{tipoCultivo.id}" required>
-                        <option value="">Selecciona un Tipo de Cultivo</option>
-                        <option th:each="tc : ${tiposCultivo}" th:value="${tc.id}" th:text="${tc.nombre}"></option>
-                    </select>
-                    <div th:if="${#fields.hasErrors('tipoCultivo')}" th:errors="*{tipoCultivo}" class="error-message"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="nombre">Nombre de Etapa:</label>
-                    <input type="text" id="nombre" th:field="*{nombre}" required>
+                    <label for="nombre">Nombre de la Etapa:</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required />
                     <div th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="descripcion">Descripción (Opcional):</label>
+                    <label for="descripcion">Descripción:</label>
                     <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
                     <div th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="duracionDias">Duración Est. (días):</label>
-                    <input type="number" id="duracionDias" th:field="*{duracionDias}">
+                    <label for="duracionDias">Duración Estimada (días):</label>
+                    <input type="number" id="duracionDias" th:field="*{duracionDias}" min="0" />
                     <div th:if="${#fields.hasErrors('duracionDias')}" th:errors="*{duracionDias}" class="error-message"></div>
                 </div>
 
