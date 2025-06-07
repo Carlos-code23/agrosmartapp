@@ -78,16 +78,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="numeroSemillas">Número de Semillas (aprox.):</label>
-                    <input type="number" id="numeroSemillas" th:field="*{numeroSemillas}" min="0" step="0.01" />
-                    <div th:if="${#fields.hasErrors('numeroSemillas')}" th:errors="*{numeroSemillas}" class="error-message"></div>
-                </div>
-
-                <input type="hidden" th:field="*{estimacionCosto}" />
-
-                <div class="form-group">
                     <label for="estado">Estado:</label>
-                    <input type="text" id="estado" th:field="*{estado}" />
+                    <select id="estado" th:field="*{estado}" required>
+                        <option value="">Seleccione un estado</option>
+                        <option th:each="estadoEnum : ${estadosPlaneacion}"
+                                th:value="${estadoEnum}"
+                                th:text="${estadoEnum.getDisplayValue()}">
+                        </option>
+                    </select>
                     <div th:if="${#fields.hasErrors('estado')}" th:errors="*{estado}" class="error-message"></div>
                 </div>
 

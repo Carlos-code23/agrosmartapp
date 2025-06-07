@@ -45,6 +45,7 @@
                         <th>Nombre</th>
                         <th>Parcela</th>
                         <th>Tipo de Cultivo</th>
+                        <th>Etapa Inicial</th>
                         <th>Inicio</th>
                         <th>Fin Estimado</th>
                         <th>Semillas Est.</th>
@@ -58,11 +59,12 @@
                         <td th:text="${planeacion.nombre}"></td>
                         <td th:text="${planeacion.parcela.nombre}"></td>
                         <td th:text="${planeacion.tipoCultivo.nombre}"></td>
+                        <td th:text="${planeacion.etapaCultivo?.nombre ?: 'N/A'}"></td>
                         <td th:text="${planeacion.fechaInicio}"></td>
                         <td th:text="${planeacion.fechaFinEstimada}"></td>
                         <td th:text="${planeacion.numeroSemillas}"></td>
                         <td th:text="${planeacion.estimacionCosto}"></td>
-                        <td th:text="${planeacion.estado}"></td>
+                        <td th:text="${planeacion.estado?.displayValue ?: 'N/A'}"></td>
                         <td>
                             <a th:href="@{/planeaciones/edit/{id}(id=${planeacion.id})}" class="button-small edit-button">Editar</a>
                             <a th:href="@{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" class="button-small">Ver Insumos</a>

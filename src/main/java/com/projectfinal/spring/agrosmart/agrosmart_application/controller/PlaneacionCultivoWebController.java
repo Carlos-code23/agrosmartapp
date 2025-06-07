@@ -1,15 +1,16 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.controller;
 
-import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo; // Importar EtapaCultivo
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Parcela;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.PlaneacionCultivo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoCultivo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
-import com.projectfinal.spring.agrosmart.agrosmart_application.service.EtapaCultivoService; // Importar el servicio
+import com.projectfinal.spring.agrosmart.agrosmart_application.service.EtapaCultivoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.ParcelaService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.PlaneacionCultivoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.TipoCultivoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.UsuarioService;
+import com.projectfinal.spring.agrosmart.agrosmart_application.util.EstadoPlaneacion; // Importamos el Enum
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Arrays; // Necesario para Arrays.asList si se usa
 
 @Controller
 @RequestMapping("/planeaciones")
@@ -33,10 +35,10 @@ public class PlaneacionCultivoWebController {
     private final EtapaCultivoService etapaCultivoService; // Inyectar el servicio de etapas
 
     public PlaneacionCultivoWebController(PlaneacionCultivoService planeacionCultivoService,
-                                        ParcelaService parcelaService,
-                                        TipoCultivoService tipoCultivoService,
-                                        UsuarioService usuarioService,
-                                        EtapaCultivoService etapaCultivoService) { // Añadir al constructor
+                                          ParcelaService parcelaService,
+                                          TipoCultivoService tipoCultivoService,
+                                          UsuarioService usuarioService,
+                                          EtapaCultivoService etapaCultivoService) { // Añadir al constructor
         this.planeacionCultivoService = planeacionCultivoService;
         this.parcelaService = parcelaService;
         this.tipoCultivoService = tipoCultivoService;
@@ -64,14 +66,15 @@ public class PlaneacionCultivoWebController {
     @GetMapping({"/new", "/edit/{id}"})
     public String showForm(@PathVariable(required = false) Long id, Model model, RedirectAttributes redirectAttributes) {
         Usuario currentUser = getAuthenticatedUser();
-        
+
         // Cargar las parcelas del usuario actual
         List<Parcela> parcelas = parcelaService.findByUsuario(currentUser);
-        // Cargar los tipos de cultivo disponibles
-        List<TipoCultivo> tiposCultivo = tipoCultivoService.getAllTiposCultivo(); // Asumo que son globales o que también tienes un findByUsuario para ellos
+        // Cargar los tipos de cultivo disponibles (asumo que son globales o que también tienes un findByUsuario para ellos)
+        List<TipoCultivo> tiposCultivo = tipoCultivoService.getAllTiposCultivo();
         // Cargar las etapas de cultivo disponibles para el usuario actual
-        List<EtapaCultivo> etapasCultivo = etapaCultivoService.findByUsuario(currentUser); // Obtener etapas del usuario
+        List<EtapaCultivo> etapasCultivo = etapaCultivoService.findByUsuario(currentUser);
 
+        // --- VALIDACIONES PREVIAS PARA EVITAR FORMULARIOS VACÍOS ---
         if (parcelas.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Debe registrar al menos una parcela antes de crear una planeación.");
             return "redirect:/parcelas/new"; // Redirigir para crear parcela
@@ -81,9 +84,10 @@ public class PlaneacionCultivoWebController {
             return "redirect:/tipos-cultivo"; // O a una página de error
         }
         if (etapasCultivo.isEmpty()) {
-             redirectAttributes.addFlashAttribute("errorMessage", "No hay etapas de cultivo registradas. Contacte al administrador o cree una.");
+            redirectAttributes.addFlashAttribute("errorMessage", "No hay etapas de cultivo registradas. Contacte al administrador o cree una.");
             return "redirect:/etapas/new"; // Redirigir para crear etapa si no hay
         }
+        // --- FIN VALIDACIONES PREVIAS ---
 
         PlaneacionCultivo planeacionCultivo;
         if (id != null) {
@@ -96,12 +100,15 @@ public class PlaneacionCultivoWebController {
             planeacionCultivo = optionalPlaneacion.get();
         } else {
             planeacionCultivo = new PlaneacionCultivo();
+            // Opcional: Si quieres un estado por defecto inicial en el formulario para nuevas planeaciones
+            // planeacionCultivo.setEstado(EstadoPlaneacion.PENDIENTE);
         }
 
         model.addAttribute("planeacionCultivo", planeacionCultivo);
         model.addAttribute("parcelas", parcelas);
         model.addAttribute("tiposCultivo", tiposCultivo);
         model.addAttribute("etapasCultivo", etapasCultivo); // Añadir las etapas al modelo
+        model.addAttribute("estadosPlaneacion", EstadoPlaneacion.values()); // <--- ¡NUEVO! Pasar todos los valores del Enum EstadoPlaneacion
         return "planeaciones/planeacion-form";
     }
 
@@ -119,12 +126,21 @@ public class PlaneacionCultivoWebController {
         List<TipoCultivo> tiposCultivo = tipoCultivoService.getAllTiposCultivo();
         List<EtapaCultivo> etapasCultivo = etapaCultivoService.findByUsuario(currentUser); // Recargar etapas
 
-        // Validar relaciones antes de guardar si no hay errores de campos simples
+        // --- VALIDACIONES DE RELACIONES ---
+        // Se mueven las validaciones de las relaciones (parcela, tipoCultivo, etapaCultivo)
+        // DENTRO del bloque 'if (!result.hasErrors())' para que se ejecuten solo si las validaciones básicas de campos del modelo pasan.
+        // Y se incluyen en el bloque 'result.hasErrors()' de retorno si fallan.
+
+        // NOTA: Si el campo 'estado' en PlaneacionCultivo tiene @NotNull o similar,
+        // y quieres que el valor por defecto 'PENDIENTE' se establezca SIEMPRE que no venga del formulario,
+        // la lógica del @PrePersist es la más robusta. Si lo manejas aquí, asegúrate de que result.hasErrors()
+        // no falle por un estado null antes de que lo setees.
+
         if (!result.hasErrors()) {
             // Asegurarse de que la parcela seleccionada pertenece al usuario
             Optional<Parcela> selectedParcela = parcelas.stream()
-                .filter(p -> p.getId().equals(planeacionCultivo.getParcela().getId()))
-                .findFirst();
+                    .filter(p -> p.getId().equals(planeacionCultivo.getParcela().getId()))
+                    .findFirst();
             if (selectedParcela.isEmpty()) {
                 result.rejectValue("parcela", "invalid.parcela", "La parcela seleccionada no es válida o no le pertenece.");
             } else {
@@ -133,8 +149,8 @@ public class PlaneacionCultivoWebController {
 
             // Asegurarse de que el tipo de cultivo seleccionado es válido
             Optional<TipoCultivo> selectedTipoCultivo = tiposCultivo.stream()
-                .filter(tc -> tc.getId().equals(planeacionCultivo.getTipoCultivo().getId()))
-                .findFirst();
+                    .filter(tc -> tc.getId().equals(planeacionCultivo.getTipoCultivo().getId()))
+                    .findFirst();
             if (selectedTipoCultivo.isEmpty()) {
                 result.rejectValue("tipoCultivo", "invalid.tipoCultivo", "El tipo de cultivo seleccionado no es válido.");
             } else {
@@ -143,20 +159,32 @@ public class PlaneacionCultivoWebController {
 
             // Asegurarse de que la etapa de cultivo seleccionada es válida y pertenece al usuario
             Optional<EtapaCultivo> selectedEtapa = etapasCultivo.stream() // Usar las etapas del usuario
-                .filter(ec -> ec.getId().equals(planeacionCultivo.getEtapaCultivo().getId()))
-                .findFirst();
+                    .filter(ec -> ec.getId().equals(planeacionCultivo.getEtapaCultivo().getId()))
+                    .findFirst();
             if (selectedEtapa.isEmpty()) {
                 result.rejectValue("etapaCultivo", "invalid.etapaCultivo", "La etapa de cultivo seleccionada no es válida o no le pertenece.");
             } else {
                 planeacionCultivo.setEtapaCultivo(selectedEtapa.get()); // Asignar la entidad completa
             }
+
+            // Ya no necesitas un @RequestParam para el estado si usas th:field="*{estado}"
+            // Spring Binder se encarga de mapear automáticamente el string del Enum.
+            // Si el campo 'estado' en el modelo puede ser null y el @PrePersist lo maneja,
+            // no necesitas establecerlo aquí a menos que quieras una lógica condicional específica
+            // basada en la entrada del formulario (ej. un default diferente).
+            // Si no se selecciona nada y no hay @PrePersist, `planeacionCultivo.getEstado()` será null.
+            // Si tu @PrePersist lo gestiona, esta parte es opcional aquí.
+            // if (planeacionCultivo.getEstado() == null) {
+            //     planeacionCultivo.setEstado(EstadoPlaneacion.PENDIENTE);
+            // }
         }
 
-
         if (result.hasErrors()) {
+            // Asegúrate de pasar todos los atributos necesarios para renderizar el formulario correctamente
             model.addAttribute("parcelas", parcelas);
             model.addAttribute("tiposCultivo", tiposCultivo);
             model.addAttribute("etapasCultivo", etapasCultivo); // Añadir etapas al modelo en caso de error
+            model.addAttribute("estadosPlaneacion", EstadoPlaneacion.values()); // <--- ¡NUEVO! Re-pasar los valores del Enum
             return "planeaciones/planeacion-form";
         }
 
@@ -169,6 +197,7 @@ public class PlaneacionCultivoWebController {
             model.addAttribute("parcelas", parcelas);
             model.addAttribute("tiposCultivo", tiposCultivo);
             model.addAttribute("etapasCultivo", etapasCultivo);
+            model.addAttribute("estadosPlaneacion", EstadoPlaneacion.values()); // <--- ¡NUEVO! Re-pasar los valores del Enum
             return "planeaciones/planeacion-form";
         }
         return "redirect:/planeaciones";

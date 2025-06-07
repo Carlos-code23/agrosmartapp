@@ -1,5 +1,6 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.model;
 
+import com.projectfinal.spring.agrosmart.agrosmart_application.util.EstadoPlaneacion;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,22 +35,22 @@ public class PlaneacionCultivo {
     @JoinColumn(name = "tipo_cultivo_id", nullable = false)
     private TipoCultivo tipoCultivo;
 
-    // ¡NUEVA RELACIÓN: Una Planeación de Cultivo tiene una Etapa de Cultivo!
-    @ManyToOne(fetch = FetchType.LAZY) // Lazy loading es bueno para ManyToOne
-    @JoinColumn(name = "etapa_cultivo_id", nullable = false) // Columna FK
-    private EtapaCultivo etapaCultivo; // Campo para la etapa
+    
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "etapa_cultivo_id", nullable = false) 
+    private EtapaCultivo etapaCultivo; 
 
-    @Column(nullable = false) // Indica que el nombre no puede ser nulo
+    @Column(nullable = false) 
     private String nombre;
 
     @Column(name = "fecha_inicio", nullable = false)
-    private LocalDate fechaInicio; // Mapea a DATE
+    private LocalDate fechaInicio; 
 
     @Column(name = "fecha_fin_estimada")
-    private LocalDate fechaFinEstimada; // Mapea a DATE
+    private LocalDate fechaFinEstimada; 
 
     @Column(name = "numero_semillas", precision = 15, scale = 2)
-    private BigDecimal numeroSemillas; // Campo calculado
+    private BigDecimal numeroSemillas; 
 
     @Column(name = "estimacion_costo", precision = 10, scale = 2)
     private BigDecimal estimacionCosto;
@@ -57,16 +58,15 @@ public class PlaneacionCultivo {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(length = 50)
-    private String estado; // Ej. 'Planificado', 'En Progreso', 'Cosechado'
+    @Enumerated(EnumType.STRING) 
+    @Column(nullable = false) 
+    private EstadoPlaneacion estado; 
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // Relaciones: Una PlaneacionCultivo tiene muchos SeguimientosEtapa, Siembras e InsumosPlaneacion
     
     @OneToMany(mappedBy = "planeacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InsumoPlaneacion> insumosPlaneacion;
@@ -77,8 +77,9 @@ public class PlaneacionCultivo {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }
-        if (this.estado == null || this.estado.isEmpty()) {
-            this.estado = "Planificado"; // Valor por defecto
+        
+        if (this.estado == null) { 
+            this.estado = EstadoPlaneacion.PENDIENTE;
         }
     }
 
