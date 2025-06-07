@@ -68,8 +68,9 @@
                     <label for="tipo">Tipo de Insumo:</label>
                     <select id="tipo" th:field="*{tipo}" required>
                         <option value="">Seleccione un tipo</option>
-                        <option th:each="tipo : ${T(com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoInsumo).values()}"
-                                th:value="${tipo}" th:text="${tipo.name().replace('_', ' ')}">Tipo</option>
+                        <option th:each="tipo : ${T(com.projectfinal.spring.agrosmart.agrosmart_application.util.TipoInsumo).values()}"
+                                th:value="${tipo}"
+                                th:text="${tipo.getDisplayValue()}">Tipo</option>
                     </select>
                     <div th:if="${#fields.hasErrors('tipo')}" th:errors="*{tipo}" class="error-message"></div>
                 </div>

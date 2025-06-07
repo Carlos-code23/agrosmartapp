@@ -1,4 +1,3 @@
-// src/main/java/com/projectfinal/spring/agrosmart/agrosmart_application/controller/InsumoWebController.java
 package com.projectfinal.spring.agrosmart.agrosmart_application.controller;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Insumo;
@@ -77,38 +76,44 @@ public class InsumoWebController {
     // Procesar el formulario de guardado (creación o actualización)
     @PostMapping
     public String saveInsumo(@Valid @ModelAttribute("insumo") Insumo insumo,
-                             BindingResult result,
-                             @RequestParam(value = "unidadMedidaSelect", required = false) String unidadMedidaSelect,
-                             @RequestParam(value = "unidadMedidaCustom", required = false) String unidadMedidaCustom,
-                             Model model,
-                             RedirectAttributes redirectAttributes) {
-        
+                         BindingResult result,
+                         @RequestParam(value = "unidadMedidaSelect", required = false) String unidadMedidaSelect,
+                         @RequestParam(value = "unidadMedidaCustom", required = false) String unidadMedidaCustom,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
+
         Usuario currentUser = getAuthenticatedUser();
-        insumo.setUsuario(currentUser); // Asegura que el insumo se asocie al usuario actual
-        
-        // Lógica para manejar la unidad de medida: seleccionada o personalizada
+        insumo.setUsuario(currentUser);
+
+        boolean unidadMedidaSet = false; // Bandera para saber si se asignó la unidad de medida
+
         if ("OTRO".equals(unidadMedidaSelect) && unidadMedidaCustom != null && !unidadMedidaCustom.trim().isEmpty()) {
             insumo.setUnidadMedida(unidadMedidaCustom.trim());
+            unidadMedidaSet = true;
         } else if (unidadMedidaSelect != null && !unidadMedidaSelect.isEmpty() && !"OTRO".equals(unidadMedidaSelect)) {
-            // Asegúrate de que el valor seleccionado sea una unidad válida del enum
             try {
-                UnidadMedida selectedEnum = UnidadMedida.valueOf(unidadMedidaSelect);
-                insumo.setUnidadMedida(selectedEnum.getDescripcion()); // Guardar la descripción de la unidad
+                UnidadMedida selectedEnum = UnidadMedida.valueOf(unidadMedidaSelect); // Convierte "L" a UnidadMedida.L
+                insumo.setUnidadMedida(selectedEnum.getDescripcion()); // Guarda "Litros"
+                unidadMedidaSet = true;
             } catch (IllegalArgumentException e) {
+                // Esto maneja si el valor del select no es un Enum válido
                 result.rejectValue("unidadMedida", "invalid.unidadMedida", "La unidad de medida seleccionada no es válida.");
             }
-        } else {
-            result.rejectValue("unidadMedida", "required.unidadMedida", "Debe seleccionar o especificar una unidad de medida.");
+        }   
+
+        // Validación manual: Si la unidad de medida no fue establecida por las condiciones anteriores
+        if (!unidadMedidaSet || insumo.getUnidadMedida().trim().isEmpty()) {
+            result.rejectValue("unidadMedida", "required.unidadMedida", "La unidad de medida es obligatoria.");
         }
 
 
-        // Si hay errores de validación, regresa al formulario
+        // Ahora, si hay errores de validación (incluyendo el nuestro si lo añadimos)
         if (result.hasErrors()) {
             model.addAttribute("unidadesMedida", Arrays.asList(UnidadMedida.values()));
-            // Si hay un error, el campo custom no se mostrará si no se envía de nuevo
-            model.addAttribute("selectedUnidadMedida", unidadMedidaSelect); // Para mantener la selección del usuario
-            model.addAttribute("customUnidadMedidaValue", unidadMedidaCustom); // Para mantener el valor del campo custom
-            return "insumos/insumo-form";
+            // Para mantener la selección del usuario si hay errores
+            model.addAttribute("selectedUnidadMedida", unidadMedidaSelect);
+            model.addAttribute("customUnidadMedidaValue", unidadMedidaCustom);
+        return "insumos/insumo-form";
         }
 
         try {

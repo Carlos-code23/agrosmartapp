@@ -35,8 +35,8 @@ public class Insumo {
     @Column(name = "proveedor", length = 255) // Puede ser null si no es obligatorio al inicio
     private String proveedor;
 
-    @NotBlank(message = "La unidad de medida es obligatoria")
-    @Size(max = 50, message = "La unidad de medida no puede exceder los 50 caracteres")
+    //@NotBlank(message = "La unidad de medida es obligatoria")
+    //@Size(max = 50, message = "La unidad de medida no puede exceder los 50 caracteres")
     @Column(name = "unidad_medida", length = 50)
     private String unidadMedida; // Ej. 'kg', 'litros', 'gr', 'unidad', 'paquete'
 
@@ -46,7 +46,7 @@ public class Insumo {
     private BigDecimal precioUnitario; // Cambiado de costoUnitario a precioUnitario
 
     @Column(columnDefinition = "TEXT")
-    private String descripcion; // Puede ser null
+    private String descripcion; 
 
     
     @ManyToOne(fetch = FetchType.LAZY)
