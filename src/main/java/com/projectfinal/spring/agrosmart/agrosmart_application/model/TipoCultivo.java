@@ -40,7 +40,6 @@ public class TipoCultivo {
     private Integer duracionDiasEstimada;
 
     @Column(name = "distancia_surco", precision = 5, scale = 2)
-
     private BigDecimal distanciaSurco;
 
     @Column(name = "distancia_planta", precision = 5, scale = 2)
