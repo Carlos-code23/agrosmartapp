@@ -26,25 +26,20 @@ public class TipoCultivo {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    // Campo existente: Densidad de siembra recomendada por hectárea (general)
     @Column(name = "densidad_siembra_recomendada_por_ha", precision = 10, scale = 2)
     private BigDecimal densidadSiembraRecomendadaPorHa;
 
     @Column(name = "duracion_dias_estimada")
     private Integer duracionDiasEstimada;
 
-    // --- NUEVOS CAMPOS PARA CÁLCULO DE DENSIDAD DE SIEMBRA ---
     @Column(name = "distancia_surco", precision = 5, scale = 2) // Distancia entre surcos en metros
     private BigDecimal distanciaSurco;
 
     @Column(name = "distancia_planta", precision = 5, scale = 2) // Distancia entre plantas en metros
     private BigDecimal distanciaPlanta;
-    // --------------------------------------------------------
 
     // Relaciones: Un TipoCultivo puede tener muchas PlaneacionesCultivo y muchas EtapasCultivo
     @OneToMany(mappedBy = "tipoCultivo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PlaneacionCultivo> planeacionesCultivo;
 
-    //@OneToMany(mappedBy = "tipoCultivo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    //private List<EtapaCultivo> etapasCultivo;
 }

@@ -20,9 +20,9 @@ public class Parcela {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY) // Muchas parcelas pertenecen a un solo usuario
-    @JoinColumn(name = "usuario_id", nullable = false) // Columna FK en la tabla 'parcelas'
-    private Usuario usuario; // El objeto Usuario al que pertenece esta parcela
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "usuario_id", nullable = false) 
+    private Usuario usuario; 
 
     @Column(nullable = false, length = 255)
     private String nombre;
@@ -34,9 +34,9 @@ public class Parcela {
     private BigDecimal tamano;
 
     @Column(name = "unidad_medida", length = 50)
-    private String unidadMedida; // Ej. 'hectareas', 'm2'
+    private String unidadMedida;
 
-    @Column(columnDefinition = "TEXT") // Mapea a tipo TEXT en PostgreSQL
+    @Column(columnDefinition = "TEXT") 
     private String descripcion;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -45,7 +45,6 @@ public class Parcela {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relaciones: Una Parcela puede tener muchas PlaneacionesCultivo
     @OneToMany(mappedBy = "parcela", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<PlaneacionCultivo> planeacionesCultivo;
 
