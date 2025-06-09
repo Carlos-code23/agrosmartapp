@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "usuarios")
-@Getter // Genera todos los getters
-@Setter // Genera todos los setters
-@NoArgsConstructor // Genera un constructor sin argumentos
-@AllArgsConstructor // Genera un constructor con todos los argumentos
+@Getter 
+@Setter 
+@NoArgsConstructor 
+@AllArgsConstructor 
 public class Usuario {
 
     @Id
@@ -31,15 +31,12 @@ public class Usuario {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Relaciones: Un Usuario puede tener muchas Parcelas y muchas PlaneacionesCultivo
-    // mappedBy indica el campo en la entidad 'Parcela' que posee la relación (la FK)
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Parcela> parcelas;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<PlaneacionCultivo> planeacionesCultivo;
 
-    // Método para establecer la fecha de creación automáticamente
     @PrePersist
     protected void onCreate() {
         if (this.createdAt == null) {

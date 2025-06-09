@@ -15,10 +15,6 @@ public interface PlaneacionCultivoRepository extends JpaRepository<PlaneacionCul
     // Encuentra una planeación por su ID y el usuario al que pertenece
     Optional<PlaneacionCultivo> findByIdAndUsuario(Long id, Usuario usuario);
 
-
-    // Encontrar planeaciones por usuario
-    //List<PlaneacionCultivo> findByUsuarioId(Long usuarioId);
-
     // Encontrar planeaciones por parcela
     List<PlaneacionCultivo> findByParcelaId(Long parcelaId);
 

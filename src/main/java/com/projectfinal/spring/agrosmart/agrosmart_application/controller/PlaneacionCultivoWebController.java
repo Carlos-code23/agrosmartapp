@@ -10,7 +10,7 @@ import com.projectfinal.spring.agrosmart.agrosmart_application.service.ParcelaSe
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.PlaneacionCultivoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.TipoCultivoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.UsuarioService;
-import com.projectfinal.spring.agrosmart.agrosmart_application.util.EstadoPlaneacion; // Importamos el Enum
+import com.projectfinal.spring.agrosmart.agrosmart_application.util.EstadoPlaneacion; 
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,7 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Arrays; // Necesario para Arrays.asList si se usa
+import java.util.Arrays;
 
 @Controller
 @RequestMapping("/planeaciones")
@@ -32,18 +32,18 @@ public class PlaneacionCultivoWebController {
     private final ParcelaService parcelaService;
     private final TipoCultivoService tipoCultivoService;
     private final UsuarioService usuarioService;
-    private final EtapaCultivoService etapaCultivoService; // Inyectar el servicio de etapas
+    private final EtapaCultivoService etapaCultivoService; 
 
     public PlaneacionCultivoWebController(PlaneacionCultivoService planeacionCultivoService,
                                           ParcelaService parcelaService,
                                           TipoCultivoService tipoCultivoService,
                                           UsuarioService usuarioService,
-                                          EtapaCultivoService etapaCultivoService) { // Añadir al constructor
+                                          EtapaCultivoService etapaCultivoService) { 
         this.planeacionCultivoService = planeacionCultivoService;
         this.parcelaService = parcelaService;
         this.tipoCultivoService = tipoCultivoService;
         this.usuarioService = usuarioService;
-        this.etapaCultivoService = etapaCultivoService; // Asignar
+        this.etapaCultivoService = etapaCultivoService; 
     }
 
     private Usuario getAuthenticatedUser() {
@@ -100,7 +100,7 @@ public class PlaneacionCultivoWebController {
             planeacionCultivo = optionalPlaneacion.get();
         } else {
             planeacionCultivo = new PlaneacionCultivo();
-            // Opcional: Si quieres un estado por defecto inicial en el formulario para nuevas planeaciones
+            // Opcional: un estado por defecto inicial en el formulario para nuevas planeaciones
             // planeacionCultivo.setEstado(EstadoPlaneacion.PENDIENTE);
         }
 
@@ -125,16 +125,6 @@ public class PlaneacionCultivoWebController {
         List<Parcela> parcelas = parcelaService.findByUsuario(currentUser);
         List<TipoCultivo> tiposCultivo = tipoCultivoService.getAllTiposCultivo();
         List<EtapaCultivo> etapasCultivo = etapaCultivoService.findByUsuario(currentUser); // Recargar etapas
-
-        // --- VALIDACIONES DE RELACIONES ---
-        // Se mueven las validaciones de las relaciones (parcela, tipoCultivo, etapaCultivo)
-        // DENTRO del bloque 'if (!result.hasErrors())' para que se ejecuten solo si las validaciones básicas de campos del modelo pasan.
-        // Y se incluyen en el bloque 'result.hasErrors()' de retorno si fallan.
-
-        // NOTA: Si el campo 'estado' en PlaneacionCultivo tiene @NotNull o similar,
-        // y quieres que el valor por defecto 'PENDIENTE' se establezca SIEMPRE que no venga del formulario,
-        // la lógica del @PrePersist es la más robusta. Si lo manejas aquí, asegúrate de que result.hasErrors()
-        // no falle por un estado null antes de que lo setees.
 
         if (!result.hasErrors()) {
             // Asegurarse de que la parcela seleccionada pertenece al usuario
@@ -167,20 +157,10 @@ public class PlaneacionCultivoWebController {
                 planeacionCultivo.setEtapaCultivo(selectedEtapa.get()); // Asignar la entidad completa
             }
 
-            // Ya no necesitas un @RequestParam para el estado si usas th:field="*{estado}"
-            // Spring Binder se encarga de mapear automáticamente el string del Enum.
-            // Si el campo 'estado' en el modelo puede ser null y el @PrePersist lo maneja,
-            // no necesitas establecerlo aquí a menos que quieras una lógica condicional específica
-            // basada en la entrada del formulario (ej. un default diferente).
-            // Si no se selecciona nada y no hay @PrePersist, `planeacionCultivo.getEstado()` será null.
-            // Si tu @PrePersist lo gestiona, esta parte es opcional aquí.
-            // if (planeacionCultivo.getEstado() == null) {
-            //     planeacionCultivo.setEstado(EstadoPlaneacion.PENDIENTE);
-            // }
         }
 
         if (result.hasErrors()) {
-            // Asegúrate de pasar todos los atributos necesarios para renderizar el formulario correctamente
+            // pasar todos los atributos necesarios para renderizar el formulario correctamente
             model.addAttribute("parcelas", parcelas);
             model.addAttribute("tiposCultivo", tiposCultivo);
             model.addAttribute("etapasCultivo", etapasCultivo); // Añadir etapas al modelo en caso de error

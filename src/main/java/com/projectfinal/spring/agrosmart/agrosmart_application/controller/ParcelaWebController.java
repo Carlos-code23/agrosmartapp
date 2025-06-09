@@ -31,7 +31,7 @@ public class ParcelaWebController {
     // Obtener el usuario autenticado para asociar la parcela y para verificaciones de seguridad
     private Usuario getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName(); // El email del usuario autenticado
+        String userEmail = authentication.getName(); 
         return usuarioService.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado en la base de datos.")); // Cambiado a IllegalStateException
     }
@@ -40,8 +40,6 @@ public class ParcelaWebController {
     @GetMapping
     public String listParcelas(Model model) {
         Usuario currentUser = getAuthenticatedUser();
-        // ERROR RESUELTO: "The method getParcelasByUsuarioId(Long) is undefined for the type ParcelaService"
-        // CAMBIO: Ahora se llama a findByUsuario(Usuario) que espera un objeto Usuario.
         List<Parcela> parcelas = parcelaService.findByUsuario(currentUser);
         model.addAttribute("parcelas", parcelas);
         model.addAttribute("currentUser", currentUser);
@@ -55,9 +53,6 @@ public class ParcelaWebController {
         Parcela parcela;
 
         if (id != null) {
-            // ERROR RESUELTO (indirectamente): Aunque getParcelaById(id) existe,
-            // la lógica de seguridad se movió al servicio con getParcelaByIdAndUsuario.
-            // Esto asegura que el usuario solo edite sus propias parcelas.
             Optional<Parcela> parcelaOptional = parcelaService.getParcelaByIdAndUsuario(id, currentUser);
             if (parcelaOptional.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Parcela no encontrada o no tienes permiso para editarla.");
@@ -117,8 +112,6 @@ public class ParcelaWebController {
     public String deleteParcela(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Usuario currentUser = getAuthenticatedUser();
         try {
-            // ERROR RESUELTO: "The method deleteParcela(Long, Usuario) in the type ParcelaService is not applicable for the argument (Long)"
-            // CAMBIO: Ahora se llama a deleteParcela(Long, Usuario)
             parcelaService.deleteParcela(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Parcela eliminada exitosamente!");
         } catch (IllegalArgumentException | SecurityException e) { // Capturamos excepciones específicas

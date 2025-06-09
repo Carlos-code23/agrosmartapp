@@ -32,15 +32,12 @@ public class TipoCultivoService {
         return tipoCultivoRepository.findByUsuario(usuario);
     }
 
-    // También necesitarás este si quieres que el controlador web de TipoCultivo maneje los del usuario actual.
     @Transactional(readOnly = true)
     public Optional<TipoCultivo> getTipoCultivoByIdAndUsuario(Long id, Usuario usuario) {
         return tipoCultivoRepository.findByIdAndUsuario(id, usuario);
     }
 
-    // Si tu aplicación ahora solo mostrará tipos de cultivo del usuario logueado,
-    // este método getAllTiposCultivo() podría dejar de usarse o ser modificado para aceptar un Usuario.
-    // Por ahora, lo mantenemos como está si es usado en otros contextos globales.
+
     @Transactional(readOnly = true)
     public List<TipoCultivo> getAllTiposCultivo() {
         return tipoCultivoRepository.findAll();

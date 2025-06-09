@@ -1,15 +1,15 @@
 package com.projectfinal.spring.agrosmart.agrosmart_application.service;
 
-import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo; // ¡Importa EtapaCultivo!
-import com.projectfinal.spring.agrosmart.agrosmart_application.model.InsumoPlaneacion; // Asegúrate de importar esto si manejas insumos en planeación
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.EtapaCultivo; 
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.InsumoPlaneacion; 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Parcela;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.PlaneacionCultivo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.TipoCultivo;
-import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario; // ¡Importa Usuario!
+import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario; 
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.ParcelaRepository;
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.PlaneacionCultivoRepository;
 import com.projectfinal.spring.agrosmart.agrosmart_application.repository.TipoCultivoRepository;
-import com.projectfinal.spring.agrosmart.agrosmart_application.repository.EtapaCultivoRepository; // ¡Importa EtapaCultivoRepository!
+import com.projectfinal.spring.agrosmart.agrosmart_application.repository.EtapaCultivoRepository; 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -25,16 +25,16 @@ public class PlaneacionCultivoService {
     private final PlaneacionCultivoRepository planeacionCultivoRepository;
     private final ParcelaRepository parcelaRepository;
     private final TipoCultivoRepository tipoCultivoRepository;
-    private final EtapaCultivoRepository etapaCultivoRepository; // Inyecta el repositorio de etapas
+    private final EtapaCultivoRepository etapaCultivoRepository; 
 
     public PlaneacionCultivoService(PlaneacionCultivoRepository planeacionCultivoRepository,
                                     ParcelaRepository parcelaRepository,
                                     TipoCultivoRepository tipoCultivoRepository,
-                                    EtapaCultivoRepository etapaCultivoRepository) { // Añade al constructor
+                                    EtapaCultivoRepository etapaCultivoRepository) { 
         this.planeacionCultivoRepository = planeacionCultivoRepository;
         this.parcelaRepository = parcelaRepository;
         this.tipoCultivoRepository = tipoCultivoRepository;
-        this.etapaCultivoRepository = etapaCultivoRepository; // Asigna
+        this.etapaCultivoRepository = etapaCultivoRepository; 
     }
 
     /**
@@ -43,8 +43,6 @@ public class PlaneacionCultivoService {
      * @return La planeación de cultivo guardada.
      */
     public PlaneacionCultivo savePlaneacionCultivo(PlaneacionCultivo planeacionCultivo) {
-        // Asegúrate de que las entidades relacionadas están cargadas completamente
-        // (Esto es redundante si ya lo haces en el controlador, pero es una buena práctica de seguridad aquí)
         if (planeacionCultivo.getParcela() != null && planeacionCultivo.getParcela().getId() != null) {
             Parcela parcela = parcelaRepository.findById(planeacionCultivo.getParcela().getId())
                                             .orElseThrow(() -> new RuntimeException("Parcela no encontrada con ID: " + planeacionCultivo.getParcela().getId()));
@@ -67,7 +65,6 @@ public class PlaneacionCultivoService {
         }
 
 
-        // Recalcular la densidad de siembra (si aplica)
         if (planeacionCultivo.getParcela() != null && planeacionCultivo.getTipoCultivo() != null) {
             BigDecimal areaEnM2 = convertAreaToM2(planeacionCultivo.getParcela().getTamano(), planeacionCultivo.getParcela().getUnidadMedida());
             BigDecimal distanciaSurco = planeacionCultivo.getTipoCultivo().getDistanciaSurco();
@@ -76,10 +73,6 @@ public class PlaneacionCultivoService {
             if (distanciaSurco == null || distanciaPlanta == null ||
                 distanciaSurco.compareTo(BigDecimal.ZERO) == 0 ||
                 distanciaPlanta.compareTo(BigDecimal.ZERO) == 0) {
-                // No lanzar excepción aquí, ya que el controlador ya lo validará en el BindingResult.
-                // Si llegamos aquí con valores nulos/cero, es porque la validación del controlador falló o no se hizo.
-                // Podemos asignar null o 0 al número de semillas o simplemente permitir que la validación del controlador lo capture.
-                // Por ahora, mantendré la excepción para la lógica de negocio en el servicio si se llega aquí.
                 throw new IllegalArgumentException("Las distancias de surco y planta deben estar definidas y ser mayores que cero para el tipo de cultivo seleccionado: " + planeacionCultivo.getTipoCultivo().getNombre());
             }
 
@@ -138,31 +131,6 @@ public class PlaneacionCultivoService {
         }
         planeacionCultivoRepository.deleteById(id);
     }
-
-    // El método updatePlaneacionCultivo ya no es estrictamente necesario si savePlaneacionCultivo
-    // maneja tanto la creación como la actualización. Si lo conservas, ajusta su lógica.
-    // Para consistencia con la refactorización que se hizo en Insumo, te recomiendo quitarlo
-    // y dejar que savePlaneacionCultivo maneje la actualización.
-    // Si decides mantenerlo, asegúrate de que también maneje la EtapaCultivo y la validación de seguridad.
-    /*
-    public PlaneacionCultivo updatePlaneacionCultivo(Long id, PlaneacionCultivo planeacionCultivoDetails) {
-        PlaneacionCultivo existingPlaneacion = planeacionCultivoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Planeación de cultivo no encontrada con ID: " + id));
-
-        // ... lógica de actualización de campos y recalculado ...
-
-        // Asegúrate de actualizar la etapa también:
-        if (planeacionCultivoDetails.getEtapaCultivo() != null && planeacionCultivoDetails.getEtapaCultivo().getId() != null) {
-            EtapaCultivo etapaCultivo = etapaCultivoRepository.findById(planeacionCultivoDetails.getEtapaCultivo().getId())
-                                                            .orElseThrow(() -> new RuntimeException("Etapa de cultivo no encontrada con ID: " + planeacionCultivoDetails.getEtapaCultivo().getId()));
-            existingPlaneacion.setEtapaCultivo(etapaCultivo);
-        } else {
-             throw new IllegalArgumentException("Debe seleccionar una etapa de cultivo.");
-        }
-
-        return planeacionCultivoRepository.save(existingPlaneacion);
-    }
-    */
 
     private BigDecimal convertAreaToM2(BigDecimal tamano, String unidadMedida) {
         if ("hectareas".equalsIgnoreCase(unidadMedida)) {
