@@ -23,7 +23,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authorize -> authorize
                 // Permite acceso sin autenticación a la página de bienvenida, registro y archivos estáticos
-                .requestMatchers("/", "/index", "/auth/register", "/auth/login", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/index", "/auth/register", "/auth/login", "/css/**", "/js/**", "/img/**").permitAll()
                 // Todas las demás solicitudes requieren autenticación
                 .anyRequest().authenticated()
             )
@@ -34,14 +34,10 @@ public class SecurityConfig {
                 .permitAll() // Permite que todos accedan a la página de login
             )
             .logout(logout -> logout
-                // La configuración de logout ahora es más fluida
-                .logoutUrl("/logout") // Define la URL para cerrar sesión
+                .logoutUrl("/logout") 
                 .logoutSuccessUrl("/auth/login?logout") // Redirige después de cerrar sesión
                 .invalidateHttpSession(true) // Invalida la sesión HTTP
                 .clearAuthentication(true) // Limpia la autenticación
-                // El .permitAll() ya no es necesario aquí si la URL de logout ya se maneja
-                // dentro de la cadena de filtros por defecto de Spring Security,
-                // o si la definimos como .permitAll() en authorizeHttpRequests (ya lo hicimos arriba)
             )
             .exceptionHandling(exception -> exception
                 .accessDeniedPage("/error/403")

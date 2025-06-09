@@ -33,7 +33,7 @@ public class DashboardController {
 
         if (usuarioOptional.isPresent()) {
             model.addAttribute("usuario", usuarioOptional.get());
-            // TODO: Aquí puedes añadir más datos al modelo para el dashboard:
+            // TODO: Aquí se pueden añadir más datos al modelo para el dashboard:
             // - Listado de parcelas del usuario: model.addAttribute("parcelas", parcelaService.getParcelasByUsuarioId(usuario.getId()));
             // - Listado de planeaciones del usuario: model.addAttribute("planeaciones", planeacionCultivoService.getPlaneacionesByUsuarioId(usuario.getId()));
         } else {

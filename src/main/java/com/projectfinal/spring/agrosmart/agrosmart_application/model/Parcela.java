@@ -34,6 +34,7 @@ public class Parcela {
     private BigDecimal tamano;
 
     @Column(name = "unidad_medida", length = 50)
+
     private String unidadMedida;
 
     @Column(columnDefinition = "TEXT") 

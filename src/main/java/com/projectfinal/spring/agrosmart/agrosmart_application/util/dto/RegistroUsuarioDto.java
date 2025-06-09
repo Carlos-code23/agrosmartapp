@@ -29,5 +29,4 @@ public class RegistroUsuarioDto {
     @NotBlank(message = "Debe confirmar la contraseña.")
     private String confirmPassword;
 
-    // Puedes añadir otros campos si es necesario (ej. roles si los manejas en el registro)
 }

@@ -27,31 +27,29 @@ public class Insumo {
     @Column(nullable = false, length = 255)
     private String nombre;
 
-    @Enumerated(EnumType.STRING) // Guarda el nombre del enum (SEMILLAS, FERTILIZANTES, etc.) en la BD
+    @Enumerated(EnumType.STRING) 
     @Column(nullable = false)
-    private TipoInsumo tipo;// Ej. 'Fertilizante', 'Semilla', 'Pesticida'
+    private TipoInsumo tipo;
 
     @Size(max = 255, message = "El proveedor no puede exceder los 255 caracteres")
-    @Column(name = "proveedor", length = 255) // Puede ser null si no es obligatorio al inicio
+    @Column(name = "proveedor", length = 255) 
     private String proveedor;
 
-    //@NotBlank(message = "La unidad de medida es obligatoria")
-    //@Size(max = 50, message = "La unidad de medida no puede exceder los 50 caracteres")
     @Column(name = "unidad_medida", length = 50)
-    private String unidadMedida; // Ej. 'kg', 'litros', 'gr', 'unidad', 'paquete'
+    private String unidadMedida; 
 
     @NotNull(message = "El precio unitario es obligatorio")
     @DecimalMin(value = "0.0", inclusive = false, message = "El precio unitario debe ser mayor que cero")
     @Column(name = "precio_unitario", nullable = false, precision = 10, scale = 2)
-    private BigDecimal precioUnitario; // Cambiado de costoUnitario a precioUnitario
+    private BigDecimal precioUnitario; 
 
     @Column(columnDefinition = "TEXT")
     private String descripcion; 
 
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false) // Columna en la tabla 'insumos' que almacena el ID del usuario
-    private Usuario usuario; // Asume que ya tienes una entidad Usuario
+    @JoinColumn(name = "usuario_id", nullable = false) 
+    private Usuario usuario; 
 
     // Relaciones: Un Insumo puede estar en muchas InsumosPlaneacion
     @OneToMany(mappedBy = "insumo", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

@@ -13,6 +13,5 @@ public interface InsumoPlaneacionRepository extends JpaRepository<InsumoPlaneaci
     // Para obtener todos los insumos asociados a una planeación específica
     List<InsumoPlaneacion> findByPlaneacion(PlaneacionCultivo planeacion);
     
-    // Si usas el ID directamente en algún otro lugar, también lo puedes tener
     List<InsumoPlaneacion> findByPlaneacionId(Long planeacionId);
 }

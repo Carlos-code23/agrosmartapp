@@ -9,7 +9,10 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "tipos_cultivo")
+@Table(name = "tipos_cultivo",
+       uniqueConstraints = {
+           @UniqueConstraint(columnNames = {"nombre", "usuario_id"})
+       })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,7 +23,11 @@ public class TipoCultivo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
+    @Column(nullable = false, length = 100) 
     private String nombre;
 
     @Column(columnDefinition = "TEXT")
@@ -32,14 +39,25 @@ public class TipoCultivo {
     @Column(name = "duracion_dias_estimada")
     private Integer duracionDiasEstimada;
 
-    @Column(name = "distancia_surco", precision = 5, scale = 2) // Distancia entre surcos en metros
+    @Column(name = "distancia_surco", precision = 5, scale = 2)
+
     private BigDecimal distanciaSurco;
 
-    @Column(name = "distancia_planta", precision = 5, scale = 2) // Distancia entre plantas en metros
+    @Column(name = "distancia_planta", precision = 5, scale = 2)
     private BigDecimal distanciaPlanta;
 
-    // Relaciones: Un TipoCultivo puede tener muchas PlaneacionesCultivo y muchas EtapasCultivo
     @OneToMany(mappedBy = "tipoCultivo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PlaneacionCultivo> planeacionesCultivo;
 
+    public TipoCultivo(String nombre, String descripcion, BigDecimal densidadSiembraRecomendadaPorHa,
+                       Integer duracionDiasEstimada, BigDecimal distanciaSurco, BigDecimal distanciaPlanta,
+                       Usuario usuario) {
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.densidadSiembraRecomendadaPorHa = densidadSiembraRecomendadaPorHa;
+        this.duracionDiasEstimada = duracionDiasEstimada;
+        this.distanciaSurco = distanciaSurco;
+        this.distanciaPlanta = distanciaPlanta;
+        this.usuario = usuario;
+    }
 }

@@ -32,7 +32,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
         // Construir el objeto UserDetails que Spring Security necesita.
-        // Asignamos un rol básico. Más adelante, puedes implementar roles dinámicos.
+        // por ahora un  rol básico. Más adelante en un mayor avance del proyecto, se pueden implementar roles dinámicos.
         return new org.springframework.security.core.userdetails.User(
                 usuario.getEmail(),
                 usuario.getPassword(),

@@ -1,4 +1,3 @@
-// src/main/java/com/projectfinal/spring/agrosmart/agrosmart_application/service/ParcelaService.java
 package com.projectfinal.spring.agrosmart.agrosmart_application.service;
 
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Parcela;

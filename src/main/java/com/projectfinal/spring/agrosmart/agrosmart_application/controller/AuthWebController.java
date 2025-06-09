@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/auth") // Todas las rutas en este controlador comenzarán con /auth
+@RequestMapping("/auth") 
 public class AuthWebController {
 
     private final UsuarioService usuarioService;

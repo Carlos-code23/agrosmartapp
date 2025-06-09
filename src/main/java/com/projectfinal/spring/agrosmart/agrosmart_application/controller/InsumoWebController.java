@@ -4,7 +4,7 @@ import com.projectfinal.spring.agrosmart.agrosmart_application.model.Insumo;
 import com.projectfinal.spring.agrosmart.agrosmart_application.model.Usuario;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.InsumoService;
 import com.projectfinal.spring.agrosmart.agrosmart_application.service.UsuarioService;
-import com.projectfinal.spring.agrosmart.agrosmart_application.util.UnidadMedida; // ¡Importa la nueva clase!
+import com.projectfinal.spring.agrosmart.agrosmart_application.util.UnidadMedida; 
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,7 +14,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Arrays; // Necesario para Arrays.asList()
+import java.util.Arrays; 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

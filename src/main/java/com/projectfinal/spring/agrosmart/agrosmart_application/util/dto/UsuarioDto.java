@@ -12,9 +12,8 @@ import lombok.AllArgsConstructor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioDto { // DTO para recibir datos de un formulario de usuario
+public class UsuarioDto { 
 
-    // No incluir el ID si es para creación, solo si es para edición
 
     @NotBlank(message = "El nombre no puede estar vacío")
     @Size(min = 3, max = 255, message = "El nombre debe tener entre 3 y 255 caracteres")
@@ -26,7 +25,6 @@ public class UsuarioDto { // DTO para recibir datos de un formulario de usuario
 
     @NotBlank(message = "La contraseña no puede estar vacía")
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
-    private String password; // Solo para recibir la contraseña del formulario
+    private String password; 
 
-    // No se necesita createdAt ni relaciones aquí
 }
