@@ -1,56 +1,338 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"> <head>
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - AgroSmart</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/charts.css/dist/charts.min.css">
 </head>
-<body>
-    <header>
-        <h1>AgroSmart</h1>
-        <nav>
+<body class="dashboard-body">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-leaf logo-icon"></i>
+                <h1 class="logo">Agro<span>Smart</span></h1>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
             <ul>
-                <li><a th:href="@{/dashboard}">Dashboard</a></li>
-                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
-                <li><a th:href="@{/planeaciones}">Mis Planeaciones</a></li>
-                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
-                <li><a th:href="@{/insumos}">Insumos</a></li>
+                <li class="active">
+                    <a th:href="@{/dashboard}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
                 <li>
-                    <form th:action="@{/logout}" method="post" style="display:inline;">
-                        <button type="submit" class="logout-button">Cerrar Sesión</button>
-                    </form>
+                    <a th:href="@{/parcelas}">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Mis Parcelas</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/planeaciones}">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Mis Planeaciones</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/tipos-cultivo}">
+                        <i class="fas fa-seedling"></i>
+                        <span>Tipos de Cultivo</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/insumos}">
+                        <i class="fas fa-tractor"></i>
+                        <span>Insumos</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/reportes}">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Reportes</span>
+                    </a>
                 </li>
             </ul>
         </nav>
-    </header>
 
-    <main>
-        <section class="dashboard-summary">
-            <h2 th:if="${usuario.nombre}">Bienvenido, <span th:text="${usuario.nombre}"></span>!</h2>
-            <h2 th:unless="${usuario.nombre}">Bienvenido!</h2>
-
-            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
-
-            <h3>Resumen de tu Actividad Agrícola</h3>
-            <p>Aquí verás un resumen de tus parcelas, planeaciones de cultivo activas y métricas importantes.</p>
-
-            <div class="dashboard-cards-container">
-                <div class="card">
-                    <h4>Parcelas Registradas</h4>
-                    <p>Total: <span th:text="${#lists.size(usuario.parcelas)}">0</span></p> <a th:href="@{/parcelas}" class="button-small">Ver Parcelas</a>
+        <div class="sidebar-footer">
+            <a th:href="@{/perfil}" class="user-profile">
+                <div class="avatar">
+                    <i class="fas fa-user-circle"></i>
                 </div>
-                <div class="card">
-                    <h4>Planeaciones Activas</h4>
-                    <p>En curso: <span th:text="${#lists.size(usuario.planeacionesCultivo)}">0</span></p>
-                    <a th:href="@{/planeaciones}" class="button-small">Ver Planeaciones</a>
+                <div class="user-info">
+                    <span class="user-name" th:text="${usuario.nombre} ?: 'Usuario'"></span>
+                    <span class="user-email" th:text="${usuario.email}"></span>
                 </div>
+            </a>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit" class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar parcelas, cultivos...">
+            </div>
+            <div class="notifications">
+                <button class="notification-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-container">
+            <div class="welcome-section">
+                <h2 th:if="${usuario.nombre}">Bienvenido, <span th:text="${usuario.nombre}"></span>!</h2>
+                <h2 th:unless="${usuario.nombre}">Bienvenido!</h2>
+                <p>Resumen de tu actividad agrícola - <span th:text="${#temporals.format(#temporals.createToday(), 'dd MMMM yyyy')}"></span></p>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-icon bg-primary">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Parcelas Registradas</h3>
+                        <p class="card-value" th:text="${#lists.size(usuario.parcelas)} ?: '0'">0</p>
+                        <a th:href="@{/parcelas}" class="card-link">Ver todas <i class="fas fa-arrow-right"></i></a>
+                    </div>
                 </div>
-        </section>
+
+                <div class="summary-card">
+                    <div class="card-icon bg-success">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Planeaciones Activas</h3>
+                        <p class="card-value" th:text="${#lists.size(usuario.planeacionesCultivo)} ?: '0'">0</p>
+                        <a th:href="@{/planeaciones}" class="card-link">Ver todas <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-icon bg-warning">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Tareas Pendientes</h3>
+                        <p class="card-value">5</p>
+                        <a href="#" class="card-link">Ver tareas <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-icon bg-info">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Rendimiento</h3>
+                        <p class="card-value">+12%</p>
+                        <a href="#" class="card-link">Ver métricas <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts and Activity Sections -->
+            <div class="dashboard-grid">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3>Actividad Reciente</h3>
+                        <select class="time-select">
+                            <option>Últimos 7 días</option>
+                            <option>Últimos 30 días</option>
+                            <option>Este mes</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <table class="charts-css column show-labels show-primary-axis data-spacing-10">
+                            <caption> Actividades por día </caption>
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Lun</th>
+                                    <td style="--size: 0.3;"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Mar</th>
+                                    <td style="--size: 0.5;"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Mié</th>
+                                    <td style="--size: 0.7;"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Jue</th>
+                                    <td style="--size: 0.9;"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Vie</th>
+                                    <td style="--size: 0.6;"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Sáb</th>
+                                    <td style="--size: 0.4;"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Dom</th>
+                                    <td style="--size: 0.2;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card tasks-card">
+                    <div class="card-header">
+                        <h3>Próximas Tareas</h3>
+                        <a href="#" class="btn-text">Ver todas</a>
+                    </div>
+                    <div class="card-body">
+                        <ul class="tasks-list">
+                            <li>
+                                <div class="task-item">
+                                    <div class="task-checkbox">
+                                        <input type="checkbox" id="task1">
+                                        <label for="task1"></label>
+                                    </div>
+                                    <div class="task-content">
+                                        <h4>Regar parcela norte</h4>
+                                        <p class="task-meta">Mañana 8:00 AM • Parcela Maíz-1</p>
+                                    </div>
+                                    <div class="task-priority high"></div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="task-item">
+                                    <div class="task-checkbox">
+                                        <input type="checkbox" id="task2">
+                                        <label for="task2"></label>
+                                    </div>
+                                    <div class="task-content">
+                                        <h4>Aplicar fertilizante</h4>
+                                        <p class="task-meta">15 Jun 2025 • Parcela Trigo-3</p>
+                                    </div>
+                                    <div class="task-priority medium"></div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="task-item">
+                                    <div class="task-checkbox">
+                                        <input type="checkbox" id="task3">
+                                        <label for="task3"></label>
+                                    </div>
+                                    <div class="task-content">
+                                        <h4>Preparar suelo para nueva siembra</h4>
+                                        <p class="task-meta">20 Jun 2025 • Parcela Hortalizas</p>
+                                    </div>
+                                    <div class="task-priority low"></div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card weather-card">
+                    <div class="card-header">
+                        <h3>Clima</h3>
+                        <div class="weather-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Tu ubicación</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="weather-today">
+                            <div class="weather-icon">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div class="weather-info">
+                                <p class="weather-temp">28°C</p>
+                                <p class="weather-desc">Soleado</p>
+                            </div>
+                        </div>
+                        <div class="weather-forecast">
+                            <div class="forecast-item">
+                                <p>Mañana</p>
+                                <i class="fas fa-cloud-sun"></i>
+                                <p>26°C</p>
+                            </div>
+                            <div class="forecast-item">
+                                <p>Pasado</p>
+                                <i class="fas fa-cloud-rain"></i>
+                                <p>22°C</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card recent-activity-card">
+                    <div class="card-header">
+                        <h3>Actividad Reciente</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="activity-list">
+                            <li>
+                                <div class="activity-item">
+                                    <div class="activity-icon success">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p>Completaste la planeación de siembra para <strong>Parcela Maíz-1</strong></p>
+                                        <span class="activity-time">Hace 2 horas</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="activity-item">
+                                    <div class="activity-icon info">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p>Se registró nuevo crecimiento en <strong>Parcela Trigo-3</strong></p>
+                                        <span class="activity-time">Ayer, 15:30</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="activity-item">
+                                    <div class="activity-icon warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p>Recordatorio: <strong>Riego pendiente</strong> en Parcela Hortalizas</p>
+                                        <span class="activity-time">Ayer, 09:45</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <footer>
-        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
-    </footer>
+    <script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>

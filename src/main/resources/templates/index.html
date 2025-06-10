@@ -3,27 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido a AgroSmart</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}"> </head>
+    <title>AgroSmart - Planificación Inteligente de Cultivos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
 <body>
-    <header>
-        <h1>AgroSmart</h1>
+    <header class="main-header">
+        <div class="container">
+            <div class="logo-container">
+                <i class="fas fa-leaf logo-icon"></i>
+                <h1 class="logo">Agro<span>Smart</span></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#features">Funcionalidades</a></li>
+                    <li><a href="#about">Nosotros</a></li>
+                    <li><a th:href="@{/auth/login}">Iniciar Sesión</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
 
     <main>
-        <section class="welcome-section">
-            <h2>Gestión Inteligente de Cultivos</h2>
-            <p>AgroSmart es tu compañero ideal para optimizar la gestión de tus parcelas y cultivos. Controla tus planificaciones, insumos, y siembras para maximizar tu productividad.</p>
-            <p>Con nuestra plataforma, podrás calcular la densidad de siembra, llevar un seguimiento detallado de cada etapa de tus cultivos y mucho más.</p>
-            <div class="auth-buttons">
-                <a th:href="@{/auth/register}" class="button">Regístrate</a>
-                <a th:href="@{/auth/login}" class="button">Iniciar Sesión</a>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h2>Gestión Inteligente de Cultivos</h2>
+                    <p class="hero-text">Optimiza tus parcelas y maximiza tu productividad con nuestra plataforma integral de planificación agrícola.</p>
+                    <div class="auth-buttons">
+                        <a th:href="@{/auth/register}" class="button primary">Regístrate Gratis</a>
+                        <a th:href="@{/auth/login}" class="button secondary">Iniciar Sesión</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img th:src="@{/img/farmer.svg}" alt="Agricultor usando AgroSmart" class="img-fluid">
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features-section">
+            <div class="container">
+                <h2 class="section-title">¿Qué ofrece AgroSmart?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3>Cálculo de Costos</h3>
+                        <p>Planifica y estima los costos de tus cultivos con precisión para una mejor gestión financiera.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <h3>Densidad de Siembra</h3>
+                        <p>Calcula automáticamente la densidad óptima de siembra para cada tipo de cultivo.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h3>Gestión de Etapas</h3>
+                        <p>Seguimiento detallado de cada fase del cultivo desde siembra hasta cosecha.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Análisis de Rendimiento</h3>
+                        <p>Visualiza el desempeño de tus cultivos con reportes y gráficos intuitivos.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about-section">
+            <div class="container">
+                <div class="about-content">
+                    <h2 class="section-title">Sobre AgroSmart</h2>
+                    <p>AgroSmart nace de la necesidad de modernizar la planificación agrícola, combinando tecnología con conocimiento agronómico para ofrecer soluciones inteligentes a agricultores y administradores de cultivos.</p>
+                    <p>Nuestra plataforma está diseñada para simplificar procesos complejos, permitiéndote enfocarte en lo que realmente importa: el crecimiento y éxito de tus cultivos.</p>
+                </div>
+                <div class="about-image">
+                    <img th:src="@{/img/agriculture.svg}" alt="Agricultura moderna" class="img-fluid">
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <h2>¿Listo para transformar tu gestión agrícola?</h2>
+                <p>Comienza hoy mismo a planificar tus cultivos de manera inteligente.</p>
+                <a th:href="@{/auth/register}" class="button primary large">Crear Cuenta Gratis</a>
             </div>
         </section>
     </main>
 
-    <footer>
-        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo-container">
+                        <i class="fas fa-leaf logo-icon"></i>
+                        <h1 class="logo">Agro<span>Smart</span></h1>
+                    </div>
+                    <p>Planificación inteligente para cultivos exitosos.</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Enlaces</h3>
+                    <ul>
+                        <li><a href="#features">Funcionalidades</a></li>
+                        <li><a href="#about">Nosotros</a></li>
+                        <li><a th:href="@{/auth/login}">Iniciar Sesión</a></li>
+                        <li><a th:href="@{/auth/register}">Registrarse</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>Contacto</h3>
+                    <ul>
+                        <li><i class="fas fa-envelope"></i> info@agrosmart.com</li>
+                        <li><i class="fas fa-phone"></i> +1 234 567 890</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
     </footer>
-    <script th:src="@{/js/scripts.js}"></script> </body>
+    <script th:src="@{/js/scripts.js}"></script>
+</body>
 </html>
