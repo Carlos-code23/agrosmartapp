@@ -1,74 +1,113 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${insumoPlaneacion.id} ? 'Editar Insumo en Planeación - AgroSmart' : 'Asignar Insumo a Planeación - AgroSmart'"></title>
+    <link rel="icon" type="image/x-icon" th:href="@{/img/favicon1.ico}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/cruds.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
-    <header>
-        <h1>AgroSmart</h1>
-        <nav>
+<body class="dashboard-body">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-leaf logo-icon"></i>
+                <h1 class="logo">Agro<span>Smart</span></h1>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
             <ul>
-                <li><a th:href="@{/dashboard}">Dashboard</a></li>
-                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
-                <li><a th:href="@{/planeaciones}" class="active">Mis Planeaciones</a></li>
-                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
-                <li><a th:href="@{/insumos}">Insumos</a></li>
-                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
-                <li>
-                    <form th:action="@{/logout}" method="post" style="display:inline;">
-                        <button type="submit" class="logout-button">Cerrar Sesión</button>
-                    </form>
-                </li>
+                <li><a th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a th:href="@{/parcelas}"><i class="fas fa-map-marked-alt"></i> <span>Mis Parcelas</span></a></li>
+                <li class="active"><a th:href="@{/planeaciones}"><i class="fas fa-tasks"></i> <span>Mis Planeaciones</span></a></li>
+                <li><a th:href="@{/tipos-cultivo}"><i class="fas fa-seedling"></i> <span>Tipos de Cultivo</span></a></li>
+                <li><a th:href="@{/insumos}"><i class="fas fa-boxes"></i> <span>Insumos</span></a></li>
+                <li><a th:href="@{/etapas}"><i class="fas fa-layer-group"></i> <span>Etapas de Cultivo</span></a></li>
             </ul>
         </nav>
-    </header>
 
-    <main>
-        <section class="auth-form-container">
-            <h2 th:text="${insumoPlaneacion.id} ? 'Editar Insumo en Planeación para ' + ${planeacion.nombre} : 'Asignar Insumo a Planeación: ' + ${planeacion.nombre}"></h2>
-
-            <form th:action="${insumoPlaneacion.id} ? @{/planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${insumoPlaneacion.id})} : @{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" th:object="${insumoPlaneacion}" method="post" class="auth-form">
-
-                <input type="hidden" th:field="*{id}" th:if="${insumoPlaneacion.id}" />
-                <input type="hidden" th:field="*{planeacion.id}" />
-
-                <div class="form-group">
-                    <label for="insumo">Insumo:</label>
-                    <select id="insumo" th:field="*{insumo.id}" required>
-                        <option value="">Selecciona un Insumo</option>
-                        <option th:each="i : ${allInsumos}" th:value="${i.id}" th:text="${i.nombre + ' (' + i.tipo.name().replace('_', ' ') + ' - ' + #numbers.formatCurrency(i.precioUnitario) + '/' + i.unidadMedida + ')'}"></option>
-                    </select>
-                    <div th:if="${#fields.hasErrors('insumo')}" th:errors="*{insumo}" class="error-message"></div>
+        <div class="sidebar-footer">
+            <!--<a th:href="@{/perfil}" class="user-profile">-->
+                <div class="avatar"><i class="fas fa-user"></i></div>
+                <div class="user-info">
+                    <span class="user-name" th:if="${currentUser}" th:text="${currentUser.nombre}">Usuario</span>
+                    <span class="user-email" th:if="${currentUser}" th:text="${currentUser.email}">usuario@example.com</span>
                 </div>
-
-                <div class="form-group">
-                    <label for="cantidad">Cantidad a Utilizar:</label>
-                    <input type="number" id="cantidad" th:field="*{cantidad}" step="0.001" min="0" required>
-                    <div th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}" class="error-message"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="observaciones">Observaciones:</label>
-                    <textarea id="observaciones" th:field="*{observaciones}" rows="3"></textarea>
-                    <div th:if="${#fields.hasErrors('observaciones')}" th:errors="*{observaciones}" class="error-message"></div>
-                </div>
-
-                <div class="form-group" th:if="${insumoPlaneacion.id}">
-                    <label>Costo Total del Insumo:</label>
-                    <p th:text="${#numbers.formatCurrency(insumoPlaneacion.totalInsumo)}" class="readonly-field-display"></p>
-                </div>
-
-                <button type="submit" class="button">Guardar</button>
-                <a th:href="@{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" class="button cancel-button">Volver a Insumos de Planeación</a>
+            </a>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit" class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                </button>
             </form>
-        </section>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar...">
+            </div>
+            <div class="notifications">
+                <button class="notification-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            <section class="auth-form-container card">
+                <div class="card-header">
+                    <h2 class="card-title" th:text="${insumoPlaneacion.id} ? 'Editar Insumo en Planeación para ' + ${planeacion.nombre} : 'Asignar Insumo a Planeación: ' + ${planeacion.nombre}"></h2>
+                </div>
+                <div class="card-body">
+                    <form th:action="${insumoPlaneacion.id} ? @{/planeaciones/{planeacionId}/insumos/update/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${insumoPlaneacion.id})} : @{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" th:object="${insumoPlaneacion}" method="post" class="auth-form">
+
+                        <input type="hidden" th:field="*{id}" th:if="${insumoPlaneacion.id}" />
+                        <input type="hidden" th:field="*{planeacion.id}" />
+
+                        <div class="form-group">
+                            <label for="insumo">Insumo:</label>
+                            <select id="insumo" th:field="*{insumo.id}" required>
+                                <option value="">Selecciona un Insumo</option>
+                                <option th:each="i : ${allInsumos}" th:value="${i.id}" th:text="${i.nombre + ' (' + i.tipo.name().replace('_', ' ') + ' - ' + #numbers.formatCurrency(i.precioUnitario) + '/' + i.unidadMedida + ')'}"></option>
+                            </select>
+                            <div th:if="${#fields.hasErrors('insumo')}" th:errors="*{insumo}" class="error-message"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cantidad">Cantidad a Utilizar:</label>
+                            <input type="number" id="cantidad" th:field="*{cantidad}" step="0.001" min="0" required>
+                            <div th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}" class="error-message"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="observaciones">Observaciones:</label>
+                            <textarea id="observaciones" th:field="*{observaciones}" rows="3"></textarea>
+                            <div th:if="${#fields.hasErrors('observaciones')}" th:errors="*{observaciones}" class="error-message"></div>
+                        </div>
+
+                        <div class="form-group" th:if="${insumoPlaneacion.id}">
+                            <label>Costo Total del Insumo:</label>
+                            <p th:text="${#numbers.formatCurrency(insumoPlaneacion.totalInsumo)}" class="readonly-field-display"></p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="button primary"><i class="fas fa-save"></i> Guardar</button>
+                            <a th:href="@{/planeaciones/{planeacionId}/insumos(planeacionId=${planeacion.id})}" class="button secondary"><i class="fas fa-times-circle"></i> Volver a Insumos de Planeación</a>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
     </main>
 
-    <footer>
-        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
-    </footer>
+    <script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>

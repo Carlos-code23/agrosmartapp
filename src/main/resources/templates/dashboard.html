@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - AgroSmart</title>
+    <link rel="icon" type="image/x-icon" th:href="@{/img/favicon1.ico}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -52,17 +53,11 @@
                         <span>Insumos</span>
                     </a>
                 </li>
-                <li>
-                    <a th:href="@{/reportes}">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Reportes</span>
-                    </a>
-                </li>
             </ul>
         </nav>
 
         <div class="sidebar-footer">
-            <a th:href="@{/perfil}" class="user-profile">
+            <!--<a th:href="@{/perfil}" class="user-profile">-->
                 <div class="avatar">
                     <i class="fas fa-user-circle"></i>
                 </div>
@@ -99,8 +94,8 @@
         <!-- Dashboard Content -->
         <div class="dashboard-container">
             <div class="welcome-section">
-                <h2 th:if="${usuario.nombre}">Bienvenido, <span th:text="${usuario.nombre}"></span>!</h2>
-                <h2 th:unless="${usuario.nombre}">Bienvenido!</h2>
+                <h2 th:if="${usuario.nombre}">Hola, <span th:text="${usuario.nombre}"></span>!</h2>
+                <h2 th:unless="${usuario.nombre}">Hola!</h2>
                 <p>Resumen de tu actividad agrícola - <span th:text="${#temporals.format(#temporals.createToday(), 'dd MMMM yyyy')}"></span></p>
             </div>
 

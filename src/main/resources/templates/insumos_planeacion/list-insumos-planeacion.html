@@ -1,83 +1,126 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="'Insumos para ' + ${planeacion.nombre} + ' - AgroSmart'"></title>
+    <link rel="icon" type="image/x-icon" th:href="@{/img/favicon1.ico}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/cruds.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
-    <header>
-        <h1>AgroSmart</h1>
-        <nav>
+<body class="dashboard-body">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-leaf logo-icon"></i>
+                <h1 class="logo">Agro<span>Smart</span></h1>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
             <ul>
-                <li><a th:href="@{/dashboard}">Dashboard</a></li>
-                <li><a th:href="@{/parcelas}">Mis Parcelas</a></li>
-                <li><a th:href="@{/planeaciones}" class="active">Mis Planeaciones</a></li>
-                <li><a th:href="@{/tipos-cultivo}">Tipos de Cultivo</a></li>
-                <li><a th:href="@{/insumos}">Insumos</a></li>
-                <li><a th:href="@{/etapas}">Etapas de Cultivo</a></li>
-                <li>
-                    <form th:action="@{/logout}" method="post" style="display:inline;">
-                        <button type="submit" class="logout-button">Cerrar Sesión</button>
-                    </form>
-                </li>
+                <li><a th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a th:href="@{/parcelas}"><i class="fas fa-map-marked-alt"></i> <span>Mis Parcelas</span></a></li>
+                <li class="active"><a th:href="@{/planeaciones}"><i class="fas fa-tasks"></i> <span>Mis Planeaciones</span></a></li>
+                <li><a th:href="@{/tipos-cultivo}"><i class="fas fa-seedling"></i> <span>Tipos de Cultivo</span></a></li>
+                <li><a th:href="@{/insumos}"><i class="fas fa-boxes"></i> <span>Insumos</span></a></li>
+                <li><a th:href="@{/etapas}"><i class="fas fa-layer-group"></i> <span>Etapas de Cultivo</span></a></li>
             </ul>
         </nav>
-    </header>
 
-    <main>
-        <section class="crud-section">
-            <h2 th:text="'Insumos para la Planeación: ' + ${planeacion.nombre}"></h2>
+        <div class="sidebar-footer">
+            <!--<a th:href="@{/perfil}" class="user-profile">-->
+                <div class="avatar"><i class="fas fa-user"></i></div>
+                <div class="user-info">
+                    <span class="user-name" th:if="${currentUser}" th:text="${currentUser.nombre}">Usuario</span>
+                    <span class="user-email" th:if="${currentUser}" th:text="${currentUser.email}">usuario@example.com</span>
+                </div>
+            </a>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit" class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                </button>
+            </form>
+        </div>
+    </aside>
 
-            <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
-            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
-
-            <p class="summary-info">Costo Estimado Total de la Planeación: <strong th:text="${#numbers.formatCurrency(estimacionCostoPlaneacion)}"></strong></p>
-
-            <a th:href="@{/planeaciones/{planeacionId}/insumos/new(planeacionId=${planeacion.id})}" class="button">Asignar Nuevo Insumo</a>
-            <a th:href="@{/planeaciones}" class="button cancel-button">Volver a Planeaciones</a>
-
-            <div th:if="${#lists.isEmpty(insumosPlaneacion)}" class="no-data-message">
-                <p>No hay insumos asignados a esta planeación aún.</p>
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar...">
             </div>
+            <div class="notifications">
+                <button class="notification-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+            </div>
+        </header>
 
-            <table th:unless="${#lists.isEmpty(insumosPlaneacion)}" class="data-table">
-                <thead>
-                    <tr>
-                        <th>Insumo</th>
-                        <th>Cantidad</th>
-                        <th>Unidad Medida</th>
-                        <th>Precio Unitario</th>
-                        <th>Total Insumo</th>
-                        <th>Fecha Registro</th>
-                        <th>Observaciones</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="ip : ${insumosPlaneacion}">
-                        <td th:text="${ip.insumo.nombre}"></td>
-                        <td th:text="${#numbers.formatDecimal(ip.cantidad, 1, 3)}"></td>
-                        <td th:text="${ip.insumo.unidadMedida}"></td>
-                        <td th:text="${#numbers.formatCurrency(ip.insumo.precioUnitario)}"></td>
-                        <td th:text="${#numbers.formatCurrency(ip.totalInsumo)}"></td>
-                        <td th:text="${#temporals.format(ip.fechaRegistro, 'dd-MM-yyyy')}"></td>
-                        <td th:text="${ip.observaciones}"></td>
-                        <td>
-                            <a th:href="@{/planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${ip.id})}" class="button-small edit-button">Editar</a>
-                            <form th:action="@{/planeaciones/{planeacionId}/insumos/delete/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${ip.id})}" method="post" style="display:inline-block;">
-                                <button type="submit" class="button-small delete-button" onclick="return confirm('¿Estás seguro de que quieres eliminar este insumo de la planeación?');">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+        <div class="dashboard-container">
+            <section class="crud-section card">
+                <div class="card-header">
+                    <h2 class="card-title" th:text="'Insumos para la Planeación: ' + ${planeacion.nombre}"></h2>
+                    <div class="button-group">
+                        <a th:href="@{/planeaciones/{planeacionId}/insumos/new(planeacionId=${planeacion.id})}" class="button primary">
+                            <i class="fas fa-plus"></i> Asignar Nuevo Insumo
+                        </a>
+                        <a th:href="@{/planeaciones}" class="button secondary">
+                            <i class="fas fa-arrow-alt-circle-left"></i> Volver a Planeaciones
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+                    <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+                    <p class="summary-info">Costo Estimado Total de la Planeación: <strong th:text="${#numbers.formatCurrency(estimacionCostoPlaneacion)}"></strong></p>
+
+                    <div th:if="${#lists.isEmpty(insumosPlaneacion)}" class="no-data-message">
+                        <p>No hay insumos asignados a esta planeación aún.</p>
+                    </div>
+
+                    <table th:unless="${#lists.isEmpty(insumosPlaneacion)}" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Insumo</th>
+                                <th>Cantidad</th>
+                                <th>Unidad Medida</th>
+                                <th>Precio Unitario</th>
+                                <th>Total Insumo</th>
+                                <th>Fecha Registro</th>
+                                <th>Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="ip : ${insumosPlaneacion}">
+                                <td th:text="${ip.insumo.nombre}"></td>
+                                <td th:text="${#numbers.formatDecimal(ip.cantidad, 1, 3)}"></td>
+                                <td th:text="${ip.insumo.unidadMedida}"></td>
+                                <td th:text="${#numbers.formatCurrency(ip.insumo.precioUnitario)}"></td>
+                                <td th:text="${#numbers.formatCurrency(ip.totalInsumo)}"></td>
+                                <td th:text="${#temporals.format(ip.fechaRegistro, 'dd-MM-yyyy')}"></td>
+                                <td th:text="${ip.observaciones}"></td>
+                                <td>
+                                    <a th:href="@{/planeaciones/{planeacionId}/insumos/edit/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${ip.id})}" class="button-small primary-outline"><i class="fas fa-edit"></i> Editar</a>
+                                    <form th:action="@{/planeaciones/{planeacionId}/insumos/delete/{insumoPlaneacionId}(planeacionId=${planeacion.id}, insumoPlaneacionId=${ip.id})}" method="post" style="display:inline-block;">
+                                        <button type="submit" class="button-small danger-outline" onclick="return confirm('¿Estás seguro de que quieres eliminar este insumo de la planeación?');"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
     </main>
 
-    <footer>
-        <p>&copy; 2025 AgroSmart. Todos los derechos reservados.</p>
-    </footer>
+    <script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>

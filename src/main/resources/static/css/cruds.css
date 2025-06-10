@@ -1,0 +1,295 @@
+.crud-section.card,
+.auth-form-container.card {
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem; /* Espacio entre tarjetas o al final */
+    overflow: hidden; /* Asegura que los bordes redondeados se apliquen al contenido */
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+    background-color: var(--light-color); /* Un fondo ligeramente diferente para el encabezado de la tarjeta */
+}
+
+.card-header .card-title {
+    margin: 0;
+    color: var(--dark-color);
+    font-size: 1.5rem; /* Ajusta el tamaño del título de la tarjeta */
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Estilos para Mensajes (éxito/error) */
+.message {
+    padding: 0.8rem 1.2rem;
+    border-radius: 5px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0.95;
+}
+
+.message.success {
+    background-color: #e6ffe6; /* Verde claro */
+    color: #28a745; /* Verde oscuro */
+    border: 1px solid #28a745;
+}
+
+.message.error {
+    background-color: #ffe6e6; /* Rojo claro */
+    color: #dc3545; /* Rojo oscuro */
+    border: 1px solid #dc3545;
+}
+
+/* Estilos para el Mensaje "No hay datos" */
+.no-data-message {
+    background-color: var(--light-color);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--gray-color);
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+}
+
+.no-data-message p {
+    margin-bottom: 0.5rem;
+}
+
+/* --- Estilos para Tablas de Datos (list-parcelas.html) --- */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.data-table thead {
+    background-color: var(--primary-dark); /* Color de encabezado de tabla */
+    color: var(--white);
+}
+
+.data-table th,
+.data-table td {
+    padding: 1.2rem;
+    text-align: left;
+    border-bottom: 1px solid #eee; /* Líneas divisorias de celdas */
+}
+
+.data-table th:first-child,
+.data-table td:first-child {
+    padding-left: 1.5rem; /* Espacio extra a la izquierda */
+}
+
+.data-table th:last-child,
+.data-table td:last-child {
+    padding-right: 1.5rem; /* Espacio extra a la derecha */
+}
+
+.data-table tbody tr:hover {
+    background-color: #f9f9f9; /* Efecto hover en filas */
+}
+
+/* Estilos para Botones de Acción en Tablas */
+.button-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex; /* Para alinear con iconos si se añaden */
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent; /* Base para botones outline */
+}
+
+.button-small.primary-outline {
+    color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    background-color: transparent;
+}
+
+.button-small.primary-outline:hover {
+    background-color: var(--primary-dark);
+    color: var(--white);
+}
+
+.button-small.danger-outline {
+    color: #dc3545; /* Rojo de Bootstrap para peligro */
+    border-color: #dc3545;
+    background-color: transparent;
+    margin-left: 0.5rem; /* Separación entre botones */
+}
+
+.button-small.danger-outline:hover {
+    background-color: #dc3545;
+    color: var(--white);
+}
+
+/* --- Estilos para Formularios (parcela-form.html) --- */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block; /* La etiqueta ocupa su propia línea */
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    color: var(--dark-color);
+    font-size: 1rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    color: var(--dark-color);
+    background-color: var(--white);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box; /* Asegura que el padding no aumente el ancho total */
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2); /* Sombra de enfoque con color primario */
+    outline: none; /* Elimina el contorno predeterminado del navegador */
+}
+
+.form-group textarea {
+    resize: vertical; /* Permite redimensionar verticalmente */
+    min-height: 80px;
+}
+
+.form-group select {
+    appearance: none; /* Elimina el estilo predeterminado del navegador para select */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%234CAF50" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* Icono de flecha para select */
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    background-size: 1.5em;
+    padding-right: 2.5rem; /* Espacio para el icono de flecha */
+}
+
+.error-message {
+    color: #dc3545; /* Rojo de error */
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+/* Estilos para los botones del formulario */
+.form-actions {
+    display: flex;
+    justify-content: flex-end; /* Alinea los botones a la derecha */
+    gap: 1rem; /* Espacio entre los botones */
+    margin-top: 2rem;
+}
+
+.form-actions .button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-actions .button i {
+    margin-right: 8px; /* Espacio entre el icono y el texto */
+}
+
+.form-actions .button.primary {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: 1px solid var(--primary-color);
+}
+
+.form-actions .button.primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.form-actions .button.secondary {
+    background-color: var(--gray-color);
+    color: var(--white);
+    border: 1px solid var(--gray-color);
+}
+
+.form-actions .button.secondary:hover {
+    background-color: #5a5a5a; /* Un gris un poco más oscuro */
+    border-color: #5a5a5a;
+}
+
+/* Media Queries para Responsividad en estas secciones */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .card-header .button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.8rem;
+    }
+
+    /* Opcional: Reducir tamaño de fuente en tablas para pantallas pequeñas */
+    .data-table {
+        font-size: 0.8rem;
+    }
+
+    .data-table th:first-child,
+    .data-table td:first-child,
+    .data-table th:last-child,
+    .data-table td:last-child {
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+    }
+
+    /*.form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.6rem 0.8rem;
+    }*/
+
+    .form-actions {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .form-actions .button {
+        width: 100%;
+    }
+}
